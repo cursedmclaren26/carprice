@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}What's my car worth?{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <h1>What is your car worth right now?</h1>
+  <p class="lede">
+    A {{ this_year }} valuation for <strong>any</strong> car — including models newer than
+    the training data. It works from what the car <em>is</em> (brand, segment, age,
+    kilometres, engine) rather than matching its name against a list.
+  </p>
+  {% if meta and meta.test_metrics %}
+    <div class="chips">
+      <span class="chip">{{ "{:,}".format(meta.rows) }} real listings</span>
+      <span class="chip">grouped-CV R² {{ "%.3f"|format(meta.test_metrics.test_r2) }}</span>
+      <span class="chip">typical error {{ "%.0f"|format(meta.test_metrics.test_mape * 100) }}%</span>
+      <span class="chip">{{ this_year }} prices</span>
+    </div>
+  {% endif %}
+</section>
+
+{% if load_error %}
+  <div class="alert error">
+    <strong>No model loaded.</strong> {{ load_error }}<br>
+    Train one first: <code>python -m carprice.carvalue train</code>
+  </div>
+{% else %}
+<div class="layout">
+  <form class="card" method="post" id="valuation-form">
+    <div class="row">
+      <div class="field">
+        <label for="brand">Brand</label>
+        <input type="text" name="brand" id="brand" list="brand-list"
+               value="{{ form.brand }}" placeholder="Maruti Suzuki" autocomplete="off">
+        <datalist id="brand-list">
+          {% for b in brands %}<option value="{{ b }}">{% endfor %}
+        </datalist>
+        <p class="hint">Pick from the list, or type any brand.</p>
+      </div>
+      <div class="field">
+        <label for="model">Model</label>
+        <input type="text" name="model" id="model" list="model-list"
+               value="{{ form.model }}" placeholder="Swift" autocomplete="off" required>
+        <datalist id="model-list"></datalist>
+        <p class="hint">Not in the list? Type it anyway — unseen cars are valued from
+          their segment and specs.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="year">Year of purchase</label>
+        <input type="number" name="year" id="year" min="1990" max="{{ this_year }}"
+               value="{{ form.year }}" required inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="kms_driven">Kilometres driven</label>
+        <input type="number" name="kms_driven" id="kms_driven" min="0" max="600000"
+               step="500" value="{{ form.kms_driven }}" required inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="fuel">Fuel</label>
+        <select name="fuel" id="fuel">
+          {% for f in ["Petrol", "Diesel", "CNG", "LPG", "Electric"] %}
+            <option value="{{ f }}" {% if form.fuel == f %}selected{% endif %}>{{ f }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="transmission">Transmission</label>
+        <select name="transmission" id="transmission">
+          {% for t in ["Manual", "Automatic"] %}
+            <option value="{{ t }}" {% if form.transmission == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="owner">Ownership</label>
+        <select name="owner" id="owner">
+          {% for o in ["First Owner", "Second Owner", "Third Owner", "Fourth & Above Owner"] %}
+            <option value="{{ o }}" {% if form.owner == o %}selected{% endif %}>{{ o }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="service_history">Full service history</label>
+        <select name="service_history" id="service_history">
+          <option value="yes" {% if form.service_history == "yes" %}selected{% endif %}>Yes, authorised</option>
+          <option value="no"  {% if form.service_history == "no" %}selected{% endif %}>No / partial</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="primary" type="submit">Get my car's value</button>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+  </form>
+
+  <aside class="card result-card">
+    {% if result %}
+      <p class="result-label">Estimated selling price</p>
+      <p class="result-value">₹ {{ result.price_text }}</p>
+      <p class="result-range">Likely range ₹{{ result.low_text }} – ₹{{ result.high_text }}</p>
+
+      <div class="result-meta">
+        <div class="meta-row">
+          <span>Confidence</span>
+          <span class="badge badge-{{ result.confidence }}">{{ result.confidence }}</span>
+        </div>
+        <div class="meta-row">
+          <span>Segment</span><span>{{ result.segment_label }}</span>
+        </div>
+        <div class="meta-row">
+          <span>Valued as</span>
+          <span>{{ result.brand }} {{ result.model }}
+            {% if not result.known_model %}<em class="muted">(not in training data)</em>{% endif %}
+          </span>
+        </div>
+        <div class="meta-row">
+          <span>Method</span><span>{{ result.method }}</span>
+        </div>
+      </div>
+
+      {% if result.notes %}
+        <ul class="notes">
+          {% for n in result.notes %}<li>{{ n }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+    {% else %}
+      <div class="placeholder">
+        <div class="speedo" aria-hidden="true">
+          <svg viewBox="0 0 200 110" role="img">
+            <path d="M15 100 A85 85 0 0 1 185 100" fill="none"
+                  stroke="currentColor" stroke-opacity=".18" stroke-width="14" stroke-linecap="round"/>
+            <path d="M15 100 A85 85 0 0 1 185 100" fill="none"
+                  stroke="currentColor" stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="267" stroke-dashoffset="120" opacity=".75"/>
+            <circle cx="100" cy="100" r="6" fill="currentColor"/>
+            <line x1="100" y1="100" x2="45" y2="42" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p>Fill in the car's details and hit <strong>Get my car's value</strong>.</p>
+      </div>
+    {% endif %}
+  </aside>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const MODELS = {{ names_by_brand | tojson }};
+  const brandEl = document.getElementById("brand");
+  const modelEl = document.getElementById("model");
+  const listEl = document.getElementById("model-list");
+
+  function refreshModels() {
+    const key = (brandEl.value || "").trim().toLowerCase();
+    let list = [];
+    for (const b in MODELS) {
+      if (b.toLowerCase() === key || (key && b.toLowerCase().includes(key))) {
+        list = list.concat(MODELS[b]);
+      }
+    }
+    if (!list.length) {
+      // brand not recognised — offer the full catalogue so anything is still typeable
+      for (const b in MODELS) list = list.concat(MODELS[b]);
+    }
+    list = [...new Set(list)].sort();
+    listEl.innerHTML = "";
+    list.slice(0, 300).forEach(function (m) {
+      const o = document.createElement("option");
+      o.value = m;
+      listEl.appendChild(o);
+    });
+  }
+  if (brandEl) { brandEl.addEventListener("input", refreshModels); refreshModels(); }
+</script>
+{% endblock %}

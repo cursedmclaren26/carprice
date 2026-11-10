@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Car Valuation{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%9A%97</text></svg>">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-mark">₹</span>
+      <span>Car<span class="dim">·</span>Valuation</span>
+    </a>
+    <button id="theme-toggle" class="ghost" type="button" aria-label="Toggle colour theme">◐</button>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>
+    <span>Valuations are estimates for the Indian market, 2026. Not a quote.</span>
+  </footer>
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      if (saved) document.documentElement.dataset.theme = saved;
+      var btn = document.getElementById("theme-toggle");
+      btn.addEventListener("click", function () {
+        var next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem("theme", next);
+      });
+    })();
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
