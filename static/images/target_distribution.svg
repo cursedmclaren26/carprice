@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 240" width="100%" height="100%">
+  <rect width="100%" height="100%" fill="#11161d" rx="14" stroke="#262d38" stroke-width="1.5"/>
+  <text x="230" y="32" fill="#f0f6fc" font-family="system-ui, sans-serif" font-size="13" font-weight="600" text-anchor="middle">Raw Target (Right-Skewed Selling Price)</text>
+  <text x="670" y="32" fill="#539bf5" font-family="system-ui, sans-serif" font-size="13" font-weight="600" text-anchor="middle">Log-Transformed Target: log1p(Selling_Price)</text>
+  
+  <line x1="60" y1="190" x2="400" y2="190" stroke="#30363d" stroke-width="1.5"/>
+  <line x1="60" y1="50" x2="60" y2="190" stroke="#30363d" stroke-width="1.5"/>
+  <path d="M 65 188 Q 100 185 130 90 Q 160 55 190 130 Q 250 180 390 188" fill="none" stroke="#f85149" stroke-width="2.5"/>
+  <text x="230" y="215" fill="#8b949e" font-family="system-ui, sans-serif" font-size="11" text-anchor="middle">Selling Price (₹)</text>
+  
+  <line x1="500" y1="190" x2="840" y2="190" stroke="#30363d" stroke-width="1.5"/>
+  <line x1="500" y1="50" x2="500" y2="190" stroke="#30363d" stroke-width="1.5"/>
+  <path d="M 510 188 Q 580 185 640 100 Q 670 60 700 100 Q 760 185 830 188" fill="none" stroke="#539bf5" stroke-width="2.5"/>
+  <text x="670" y="215" fill="#8b949e" font-family="system-ui, sans-serif" font-size="11" text-anchor="middle">Log(Price) Symmetrical Scale</text>
+</svg>

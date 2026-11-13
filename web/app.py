@@ -85,11 +85,14 @@ def _suggestions() -> dict[str, list[str]]:
 
 
 @app.route("/", methods=["GET", "POST"])
+@app.route("/docs", methods=["GET"])
 def index():
+    initial_view = "docs" if request.path == "/docs" else "predictor"
     if LOAD_ERROR:
         return render_template("index.html", load_error=LOAD_ERROR, result=None,
                                form={}, brands=[], this_year=VALUATION_YEAR,
-                               names_by_brand={}, segments=SEGMENT_LABELS)
+                               names_by_brand={}, segments=SEGMENT_LABELS,
+                               initial_view=initial_view)
 
     form = {
         "brand": request.form.get("brand", ""),
@@ -135,6 +138,7 @@ def index():
         brands=sorted(CATALOGUE), names_by_brand=_suggestions(),
         this_year=VALUATION_YEAR, form=form, result=result, error=error,
         meta=META, load_error=None, segments=SEGMENT_LABELS,
+        initial_view=initial_view,
     )
 
 

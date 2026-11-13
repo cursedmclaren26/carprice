@@ -150,6 +150,272 @@
   </aside>
 </div>
 {% endif %}
+
+<!-- ==============================================================
+     FLOATING PILL WINDOW SWITCHER (BOTTOM PRESENTATION DOCK)
+     ============================================================== -->
+<nav class="pill-switcher" aria-label="Presentation Navigation">
+  <button type="button" class="pill-btn active" id="btn-predictor" onclick="switchView('predictor')">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.9C2.1 11.1 2 11.5 2 12v4c0 .6.4 1 1 1h2"/>
+      <circle cx="7" cy="17" r="2"/>
+      <circle cx="17" cy="17" r="2"/>
+    </svg>
+    <span>Predictor</span>
+  </button>
+  <div class="pill-divider"></div>
+  <button type="button" class="pill-btn" id="btn-docs" onclick="switchView('docs')">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+    <span>ML Pipeline</span>
+  </button>
+</nav>
+
+<!-- ==============================================================
+     MACHINE LEARNING PIPELINE DOCUMENTATION SECTION
+     ============================================================== -->
+<section id="pipeline-docs" class="docs-container" style="display: none;">
+
+  <!-- SECTION 1: PROJECT OVERVIEW -->
+  <article class="doc-card">
+    <div class="doc-header">
+      <span class="doc-badge">Section 01</span>
+      <h2>1. Project Overview</h2>
+    </div>
+    <div class="doc-body">
+      <p>
+        The <strong>Car Price Predictor</strong> is an end-to-end Machine Learning web application designed to evaluate and estimate pre-owned car market valuations with precision. In the secondary automobile market, price determination is inherently non-linear and governed by multifaceted vehicle attributes rather than simple catalog lookups. This project formulates a robust valuation model derived directly from real transaction data.
+      </p>
+      <p>
+        To model vehicle depreciation and price dynamics, <strong>three distinct machine learning algorithms</strong> were developed and evaluated:
+      </p>
+      <div class="tech-grid">
+        <div class="tech-item">
+          <strong>Linear & Ridge Regression</strong>
+          <span>Establishes baseline parametric relationships and quantifies primary depreciation coefficients for age and odometer metrics.</span>
+        </div>
+        <div class="tech-item">
+          <strong>Random Forest Regressor</strong>
+          <span>Non-linear ensemble bagging model combining decision trees with feature subsampling to capture subtle non-linear interactions.</span>
+        </div>
+        <div class="tech-item">
+          <strong>XGBoost / Gradient Boosting</strong>
+          <span>Sequential gradient boosted regression trees minimizing residual loss to deliver optimal cross-validated predictive accuracy.</span>
+        </div>
+      </div>
+      <p>
+        The model dynamically evaluates pricing based on key automotive parameters: <strong>brand</strong>, <strong>mileage (kilometers driven)</strong>, <strong>fuel type</strong> (Petrol, Diesel, CNG, LPG, Electric), <strong>transmission</strong> (Manual vs Automatic), <strong>ownership tier</strong>, and <strong>year of manufacture</strong>.
+      </p>
+
+      <figure class="diagram-figure">
+        <img src="{{ url_for('static', filename='images/architecture_overview.svg') }}" alt="High-Level Machine Learning Pipeline Architecture" class="doc-img">
+        <figcaption>Figure 1: End-to-end Machine Learning pipeline architecture from raw data ingestion to web inference.</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <!-- SECTION 2: DATASET USED -->
+  <article class="doc-card">
+    <div class="doc-header">
+      <span class="doc-badge">Section 02</span>
+      <h2>2. Dataset Used</h2>
+    </div>
+    <div class="doc-body">
+      <p>
+        The predictive models were trained on real-world Indian pre-owned automotive marketplace transactions aggregated from reputable portals:
+      </p>
+      <div class="dataset-source-box">
+        <div class="source-info">
+          <span class="source-title">CarDekho & Kaggle Used Car Dataset</span>
+          <span class="source-meta">Corpus of historical used car sales listings with verified mechanical specifications, ownership records, and closing prices.</span>
+        </div>
+        <a href="https://www.kaggle.com/datasets/nehalbirla/vehicle-dataset-from-cardekho" target="_blank" rel="noopener noreferrer" class="doc-link-btn">
+          <span>Kaggle Dataset Source</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
+
+      <figure class="diagram-figure">
+        <img src="{{ url_for('static', filename='images/dataset_sample.svg') }}" alt="Raw Dataset Preview and Features" class="doc-img">
+        <figcaption>Figure 2: Representative sample rows and raw columnar schema from the Kaggle CarDekho dataset.</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <!-- SECTION 3: DATASET DETAILS -->
+  <article class="doc-card">
+    <div class="doc-header">
+      <span class="doc-badge">Section 03</span>
+      <h2>3. Dataset Details</h2>
+    </div>
+    <div class="doc-body">
+      <p>
+        The primary dataset contains approximately <strong>8,128 records</strong> across <strong>12 feature columns</strong> comprising both technical specifications and commercial listing data:
+      </p>
+
+      <div class="stats-cards">
+        <div class="stat-pill">
+          <span class="stat-num">~8,128</span>
+          <span class="stat-desc">Total Records</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num">12</span>
+          <span class="stat-desc">Raw Dimensions</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num">Selling Price (₹)</span>
+          <span class="stat-desc">Target Variable</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num">Supervised Regression</span>
+          <span class="stat-desc">Problem Formulation</span>
+        </div>
+      </div>
+
+      <p>
+        <strong>Problem Formulation:</strong> The challenge is formulated as a <strong>Supervised Machine Learning Regression</strong> problem. The ground-truth continuous target variable is <strong>"Selling Price"</strong> (in Indian Rupees ₹). Models optimize standard continuous regression objective functions (Mean Squared Error / Huber Loss) evaluated against Root Mean Squared Error ($RMSE$), Mean Absolute Error ($MAE$), and Coefficient of Determination ($R^2$).
+      </p>
+
+      <figure class="diagram-figure">
+        <img src="{{ url_for('static', filename='images/target_distribution.svg') }}" alt="Target Variable Selling Price Distribution" class="doc-img">
+        <figcaption>Figure 3: Empirical distribution, skewness, and log-transformed probability density of Selling Price.</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <!-- SECTION 4: PIPELINE FROM BEGINNING TO END (PHASE 1) -->
+  <article class="doc-card">
+    <div class="doc-header">
+      <span class="doc-badge">Section 04</span>
+      <h2>4. Pipeline from beginning to end (Phase 1 - Data Preprocessing)</h2>
+    </div>
+    <div class="doc-body">
+      <p>
+        Raw real-world automotive listings are rife with noisy tokens, missing data points, mixed units (e.g. <em>"1248 CC"</em>, <em>"23.4 kmpl"</em>), and asymmetric outliers. Phase 1 transforms raw unstructured listings into an enterprise-ready feature matrix through four rigorous steps:
+      </p>
+
+      <!-- Sub-section 1 -->
+      <div class="pipeline-block">
+        <div class="block-headline">
+          <span class="bullet-dot"></span>
+          <h3>Missing Value Treatment</h3>
+        </div>
+        <p>
+          Missing entries were handled selectively based on data distribution skewness and feature cardinality:
+        </p>
+        <ul class="doc-list">
+          <li>
+            <strong>Numerical Columns (e.g., Engine CC, Max Power bhp, Mileage km/l):</strong> Imputed using the <strong>Median</strong> strategy rather than the mean. Because high-performance exotic vehicles heavily skew the mean, the median provides a far more representative central tendency for standard consumer vehicles.
+          </li>
+          <li>
+            <strong>Categorical Columns (e.g., Fuel Type, Transmission, Seller Type):</strong> Imputed using the <strong>Mode</strong> (the most frequent category), stratified within each manufacturer's brand family.
+          </li>
+        </ul>
+        <figure class="diagram-figure">
+          <img src="{{ url_for('static', filename='images/missing_imputation.svg') }}" alt="Missing Value Imputation Analysis" class="doc-img">
+          <figcaption>Figure 4: Sparsity heatmap and missing value imputation across numerical and categorical features.</figcaption>
+        </figure>
+      </div>
+
+      <!-- Sub-section 2 -->
+      <div class="pipeline-block">
+        <div class="block-headline">
+          <span class="bullet-dot"></span>
+          <h3>Outlier Detection &amp; Treatment</h3>
+        </div>
+        <p>
+          To safeguard models from extreme values (such as vintage collector listings priced at ₹1 crore+ or typographical errors like 2,500,000 km driven), the <strong>Interquartile Range (IQR)</strong> method was applied:
+        </p>
+        <div class="formula-box">
+          IQR = Q3 (75th percentile) - Q1 (25th percentile)<br>
+          Lower Bound = Q1 - 1.5 &times; IQR<br>
+          Upper Bound = Q3 + 1.5 &times; IQR
+        </div>
+        <p>
+          Outliers in columns like <strong>'Kilometers Driven'</strong> and <strong>'Selling Price'</strong> were capped (winsorized) at the upper statistical boundary rather than completely discarded, preserving valuable edge samples without distorting loss convergence.
+        </p>
+        <figure class="diagram-figure">
+          <img src="{{ url_for('static', filename='images/outlier_treatment.svg') }}" alt="Outlier Detection with IQR Method" class="doc-img">
+          <figcaption>Figure 5: Boxplot distributions of Kilometers Driven and Selling Price before and after IQR capping.</figcaption>
+        </figure>
+      </div>
+
+      <!-- Sub-section 3 -->
+      <div class="pipeline-block">
+        <div class="block-headline">
+          <span class="bullet-dot"></span>
+          <h3>Feature Engineering</h3>
+        </div>
+        <p>
+          To augment the predictive capacity of both linear and tree models, 4 logical domain features were engineered:
+        </p>
+        <div class="features-table-wrapper">
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th>Engineered Feature</th>
+                <th>Mathematical Derivation</th>
+                <th>Engineering Rationale</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Car_Age</strong></td>
+                <td><code>Current_Year (2026) - Year_Manufacture</code></td>
+                <td>Direct temporal proxy capturing chronological vehicle depreciation over calendar time.</td>
+              </tr>
+              <tr>
+                <td><strong>Annual_Km_Usage</strong></td>
+                <td><code>Kilometres_Driven / max(Car_Age, 1.0)</code></td>
+                <td>Identifies excessive fleet/commercial mileage wear vs. well-maintained personal usage.</td>
+              </tr>
+              <tr>
+                <td><strong>Brand_Tier</strong></td>
+                <td><code>Binned: [Economy, Mid-Market, Luxury]</code></td>
+                <td>Groups manufacturers (e.g. BMW/Audi vs Maruti/Hyundai) into value-retention clusters.</td>
+              </tr>
+              <tr>
+                <td><strong>Mileage_Category</strong></td>
+                <td><code>Classified: Low (&lt;14), Med (14-20), High (&gt;20 kmpl)</code></td>
+                <td>Encodes consumer demand elasticity and market preference for fuel-efficient vehicles.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <figure class="diagram-figure">
+          <img src="{{ url_for('static', filename='images/feature_engineering.svg') }}" alt="Feature Engineering & Importance" class="doc-img">
+          <figcaption>Figure 6: Correlation matrix and relative importance metrics for newly engineered automotive features.</figcaption>
+        </figure>
+      </div>
+
+      <!-- Sub-section 4 -->
+      <div class="pipeline-block">
+        <div class="block-headline">
+          <span class="bullet-dot"></span>
+          <h3>Train-Test Split</h3>
+        </div>
+        <p>
+          To maintain strict experimental isolation and prevent data leakage, the processed dataset was partitioned using an <strong>80:20 Train-Test split</strong>:
+        </p>
+        <ul class="doc-list">
+          <li><strong>Training Split (80%):</strong> Dedicated exclusively to training regression models and performing 5-fold cross-validation.</li>
+          <li><strong>Testing Split (20%):</strong> Held-out partition strictly isolated until final model evaluation to simulate real-world generalization on unseen cars.</li>
+        </ul>
+        <figure class="diagram-figure">
+          <img src="{{ url_for('static', filename='images/traintest_split.svg') }}" alt="Train-Test Split Protocol" class="doc-img">
+          <figcaption>Figure 7: 80:20 train-test partition schema with stratified grouped cross-validation.</figcaption>
+        </figure>
+      </div>
+
+    </div>
+  </article>
+
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -180,5 +446,51 @@
     });
   }
   if (brandEl) { brandEl.addEventListener("input", refreshModels); refreshModels(); }
+
+  // Presentation View Switcher (Predictor <-> ML Pipeline)
+  function switchView(viewName) {
+    const predictorLayout = document.querySelector('.layout');
+    const heroSection = document.querySelector('.hero');
+    const docsSection = document.getElementById('pipeline-docs');
+    const btnPredictor = document.getElementById('btn-predictor');
+    const btnDocs = document.getElementById('btn-docs');
+
+    if (viewName === 'docs') {
+      if (predictorLayout) predictorLayout.style.display = 'none';
+      if (heroSection) heroSection.style.display = 'none';
+      if (docsSection) {
+        docsSection.style.display = 'flex';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      if (btnDocs) btnDocs.classList.add('active');
+      if (btnPredictor) btnPredictor.classList.remove('active');
+      history.replaceState(null, null, '#docs');
+    } else {
+      if (predictorLayout) predictorLayout.style.display = 'grid';
+      if (heroSection) heroSection.style.display = 'block';
+      if (docsSection) docsSection.style.display = 'none';
+      if (btnPredictor) btnPredictor.classList.add('active');
+      if (btnDocs) btnDocs.classList.remove('active');
+      history.replaceState(null, null, '#predictor');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  // Restore view from server initial_view or URL hash on load
+  const serverInitialView = {{ initial_view | default('predictor') | tojson }};
+  if (serverInitialView === 'docs' || window.location.hash === '#docs') {
+    switchView('docs');
+  }
+
+  // On mobile: after form submit, scroll result into view
+  if (window.innerWidth < 800) {
+    const resultCard = document.querySelector('.result-card');
+    const hasResult = document.querySelector('.result-value');
+    if (resultCard && hasResult) {
+      setTimeout(() => {
+        resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }
 </script>
 {% endblock %}

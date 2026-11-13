@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280" width="100%" height="100%">
+  <rect width="100%" height="100%" fill="#11161d" rx="14" stroke="#262d38" stroke-width="1.5"/>
+  <text x="30" y="38" fill="#539bf5" font-family="system-ui, sans-serif" font-size="14" font-weight="700">CARDEKHO USED CAR DATASET - TABULAR PREVIEW</text>
+  
+  <rect x="30" y="58" width="840" height="36" fill="#161b22" rx="6"/>
+  <text x="45" y="81" fill="#8b949e" font-family="monospace" font-size="12" font-weight="600">name</text>
+  <text x="240" y="81" fill="#8b949e" font-family="monospace" font-size="12" font-weight="600">year</text>
+  <text x="320" y="81" fill="#8b949e" font-family="monospace" font-size="12" font-weight="600">selling_price</text>
+  <text x="440" y="81" fill="#8b949e" font-family="monospace" font-size="12" font-weight="600">km_driven</text>
+  <text x="540" y="81" fill="#8b949e" font-family="monospace" font-size="12" font-weight="600">fuel</text>
+  <text x="620" y="81" fill="#8b949e" font-family="monospace" font-size="12" font-weight="600">seller_type</text>
+  <text x="730" y="81" fill="#8b949e" font-family="monospace" font-size="12" font-weight="600">transmission</text>
+  <text x="840" y="81" fill="#8b949e" font-family="monospace" font-size="12" font-weight="600">owner</text>
+  
+  <!-- Row 1 -->
+  <text x="45" y="122" fill="#f0f6fc" font-family="monospace" font-size="12">Maruti Swift Dzire VDI</text>
+  <text x="240" y="122" fill="#f0f6fc" font-family="monospace" font-size="12">2014</text>
+  <text x="320" y="122" fill="#539bf5" font-family="monospace" font-size="12" font-weight="600">₹ 4,50,000</text>
+  <text x="440" y="122" fill="#f0f6fc" font-family="monospace" font-size="12">145,500</text>
+  <text x="540" y="122" fill="#8b949e" font-family="monospace" font-size="12">Diesel</text>
+  <text x="620" y="122" fill="#8b949e" font-family="monospace" font-size="12">Individual</text>
+  <text x="730" y="122" fill="#8b949e" font-family="monospace" font-size="12">Manual</text>
+  <text x="840" y="122" fill="#8b949e" font-family="monospace" font-size="12">First</text>
+  <line x1="30" y1="136" x2="870" y2="136" stroke="#21262d" stroke-width="1"/>
+  
+  <!-- Row 2 -->
+  <text x="45" y="164" fill="#f0f6fc" font-family="monospace" font-size="12">Skoda Rapid 1.5 TDI Ambition</text>
+  <text x="240" y="164" fill="#f0f6fc" font-family="monospace" font-size="12">2014</text>
+  <text x="320" y="164" fill="#539bf5" font-family="monospace" font-size="12" font-weight="600">₹ 3,70,000</text>
+  <text x="440" y="164" fill="#f0f6fc" font-family="monospace" font-size="12">120,000</text>
+  <text x="540" y="164" fill="#8b949e" font-family="monospace" font-size="12">Diesel</text>
+  <text x="620" y="164" fill="#8b949e" font-family="monospace" font-size="12">Individual</text>
+  <text x="730" y="164" fill="#8b949e" font-family="monospace" font-size="12">Manual</text>
+  <text x="840" y="164" fill="#8b949e" font-family="monospace" font-size="12">Second</text>
+  <line x1="30" y1="178" x2="870" y2="178" stroke="#21262d" stroke-width="1"/>
+
+  <!-- Row 3 -->
+  <text x="45" y="206" fill="#f0f6fc" font-family="monospace" font-size="12">Hyundai i20 Magna 1.2</text>
+  <text x="240" y="206" fill="#f0f6fc" font-family="monospace" font-size="12">2017</text>
+  <text x="320" y="206" fill="#539bf5" font-family="monospace" font-size="12" font-weight="600">₹ 4,80,000</text>
+  <text x="440" y="206" fill="#f0f6fc" font-family="monospace" font-size="12">60,000</text>
+  <text x="540" y="206" fill="#8b949e" font-family="monospace" font-size="12">Petrol</text>
+  <text x="620" y="206" fill="#8b949e" font-family="monospace" font-size="12">Individual</text>
+  <text x="730" y="206" fill="#8b949e" font-family="monospace" font-size="12">Manual</text>
+  <text x="840" y="206" fill="#8b949e" font-family="monospace" font-size="12">First</text>
+  <line x1="30" y1="220" x2="870" y2="220" stroke="#21262d" stroke-width="1"/>
+
+  <!-- Row 4 -->
+  <text x="45" y="248" fill="#f0f6fc" font-family="monospace" font-size="12">Honda City i-VTEC V</text>
+  <text x="240" y="248" fill="#f0f6fc" font-family="monospace" font-size="12">2016</text>
+  <text x="320" y="248" fill="#539bf5" font-family="monospace" font-size="12" font-weight="600">₹ 5,90,000</text>
+  <text x="440" y="248" fill="#f0f6fc" font-family="monospace" font-size="12">45,000</text>
+  <text x="540" y="248" fill="#8b949e" font-family="monospace" font-size="12">Petrol</text>
+  <text x="620" y="248" fill="#8b949e" font-family="monospace" font-size="12">Dealer</text>
+  <text x="730" y="248" fill="#8b949e" font-family="monospace" font-size="12">Automatic</text>
+  <text x="840" y="248" fill="#8b949e" font-family="monospace" font-size="12">First</text>
+</svg>

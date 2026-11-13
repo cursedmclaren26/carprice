@@ -171,8 +171,8 @@ def build_market_pipeline(model: str = "hist_gb") -> Pipeline:
         est = Ridge(alpha=3.0)
     elif model == "hist_gb":
         est = HistGradientBoostingRegressor(
-            max_iter=500, learning_rate=0.06, max_leaf_nodes=31,
-            min_samples_leaf=20, l2_regularization=1.0, random_state=RANDOM_STATE)
+            max_iter=600, learning_rate=0.05, max_leaf_nodes=63,
+            min_samples_leaf=5, l2_regularization=0.5, random_state=RANDOM_STATE)
     else:
         raise ValueError(f"unknown market model '{model}'")
     return Pipeline([("preprocessor", pre), ("regressor", est)])

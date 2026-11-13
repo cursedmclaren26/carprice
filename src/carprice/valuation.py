@@ -119,13 +119,18 @@ def depreciation_value(*, ex_showroom_lakh: float, brand: str, segment: str,
             * BRAND_RETENTION.get(brand, 0.95)
             * SEGMENT_RETENTION.get(segment, 1.0)
             * FUEL_RETENTION.get(fuel, 0.97))
-    value = base * retention_fraction(age_years) * keep
+    # A pre-owned vehicle cannot retain > 92% of new ex-showroom price regardless of multiplier;
+    # this keeps the curve in its active non-zero gradient region without artificial ceiling clamping.
+    retention = min(0.92, retention_fraction(age_years) * keep)
+    value = base * retention
 
-    # kilometres: compare against a typical ~11,000 km/yr, damped so it nudges rather
-    # than dominates (condition and age matter more than the odometer beyond a point).
+    # kilometres: compare against a typical ~11,000 km/yr, smoothly damped with a
+    # continuous tanh transformation so there are NO zero-derivative flat plateaus.
+    # Every 1,000 km change smoothly reflects in the valuation without stagnation.
     expected_km = max(5_000.0, 11_000.0 * max(age_years, 1.0))
-    km_ratio = kms_driven / expected_km
-    value *= float(np.clip(km_ratio, 0.4, 2.5) ** -0.16)
+    km_ratio = float(kms_driven) / expected_km
+    km_factor = 1.0 - 0.15 * float(np.tanh((km_ratio - 1.0) * 0.75))
+    value *= km_factor
 
     value *= 1.045 if transmission == "Automatic" else 1.0
     value *= {"First Owner": 1.02, "Second Owner": 0.965,
@@ -134,11 +139,17 @@ def depreciation_value(*, ex_showroom_lakh: float, brand: str, segment: str,
     if not service_history:
         value *= 0.93
 
-    # No car is worth more than it cost new: the cap is the ex-showroom price itself,
-    # expressed as a retention fraction so it composes with the level factor. Without
-    # this, RETENTION_LEVEL > 1 lets a one-year-old EV come out *above* its own price.
+    # Soft ceiling: prevents any used car from exceeding the ex-showroom price,
+    # but uses smooth compression so there is NEVER a zero-derivative flat plateau.
+    # Even young, high-retention models (e.g. Kia/Toyota with low km) maintain a smooth
+    # depreciation gradient as mileage increases.
     ceiling = min(1.0, RETENTION_LEVEL) * 0.98 * base
-    return float(np.clip(value, 0.02 * base, ceiling))
+    threshold = 0.88 * ceiling
+    if value > threshold:
+        excess = value - threshold
+        headroom = ceiling - threshold
+        value = threshold + headroom * (1.0 - float(np.exp(-excess / headroom)))
+    return float(max(value, 0.02 * base))
 
 
 # --------------------------------------------------------------------------- #
@@ -309,12 +320,29 @@ class CarValuator:
         # ---- blending -----------------------------------------------------
         # The calibrated curve is the backbone: it generalises to any car, any age, and
         # it is what the 2026 spot-checks validated to within ~6%. The market model is a
-        # learned cross-section from 2023 listings, so it is trusted only as a *relative*
-        # adjustment (this model/segment/owner mix vs the fleet) and only where it has
-        # real signal. Averaging the two outright would re-import its vintage bias.
+        # learned cross-section from 2023 listings, so it is trusted as a *relative*
+        # adjustment (this model/segment/owner mix vs the fleet) evaluated at benchmark mileage.
+        # This isolates the model's market premium from tree leaf step-noise, ensuring
+        # the continuous depreciation curve governs mileage variations smoothly and monotonically.
         if dep is not None and market is not None:
-            rel_market = market / dep
-            rel_market = float(np.clip(rel_market, 0.72, 1.45))
+            expected_km = max(5_000.0, 11_000.0 * max(q.age, 1.0))
+            try:
+                q_bench = CarQuery(
+                    brand=q.brand, model=q.model, year=q.year, kms_driven=int(expected_km),
+                    fuel=q.fuel, transmission=q.transmission, owner=q.owner,
+                    engine_cc=q.engine_cc, seats=q.seats, service_history=q.service_history
+                )
+                X_bench = self.market_features(q_bench, brand, model, spec, segment)
+                market_bench = float(self.market_model.predict(X_bench)[0])
+                dep_bench = depreciation_value(
+                    ex_showroom_lakh=spec.ex_showroom_lakh, brand=brand, segment=segment,
+                    fuel=q.fuel, age_years=q.age, kms_driven=expected_km,
+                    transmission=q.transmission, owner=q.owner,
+                    service_history=q.service_history)
+                rel_market = float(np.clip(market_bench / dep_bench, 0.72, 1.45))
+            except Exception:
+                rel_market = float(np.clip(market / dep, 0.72, 1.45))
+
             if known:
                 w = 0.30                       # modest tilt toward the learned model
             else:

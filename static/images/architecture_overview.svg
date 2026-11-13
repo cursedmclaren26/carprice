@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320" width="100%" height="100%">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#1f6feb"/>
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#11161d" rx="14" stroke="#262d38" stroke-width="1.5"/>
+  <text x="450" y="38" fill="#539bf5" font-family="system-ui, sans-serif" font-size="16" font-weight="700" text-anchor="middle" letter-spacing="0.05em">END-TO-END MACHINE LEARNING ARCHITECTURE</text>
+  
+  <rect x="30" y="80" width="160" height="180" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="110" y="110" fill="#f0f6fc" font-family="system-ui, sans-serif" font-size="14" font-weight="600" text-anchor="middle">1. Data Ingestion</text>
+  <rect x="45" y="130" width="130" height="32" rx="6" fill="#21262d"/>
+  <text x="110" y="151" fill="#8b949e" font-family="system-ui, sans-serif" font-size="12" text-anchor="middle">CarDekho Dataset</text>
+  <rect x="45" y="172" width="130" height="32" rx="6" fill="#21262d"/>
+  <text x="110" y="193" fill="#8b949e" font-family="system-ui, sans-serif" font-size="12" text-anchor="middle">~8,128 Car Listings</text>
+  <rect x="45" y="214" width="130" height="32" rx="6" fill="#21262d"/>
+  <text x="110" y="235" fill="#8b949e" font-family="system-ui, sans-serif" font-size="12" text-anchor="middle">12 Raw Features</text>
+  
+  <line x1="190" y1="170" x2="232" y2="170" stroke="#1f6feb" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <rect x="240" y="80" width="180" height="180" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="330" y="110" fill="#f0f6fc" font-family="system-ui, sans-serif" font-size="14" font-weight="600" text-anchor="middle">2. Preprocessing</text>
+  <rect x="255" y="130" width="150" height="32" rx="6" fill="#21262d"/>
+  <text x="330" y="151" fill="#8b949e" font-family="system-ui, sans-serif" font-size="11.5" text-anchor="middle">Median / Mode Imputation</text>
+  <rect x="255" y="172" width="150" height="32" rx="6" fill="#21262d"/>
+  <text x="330" y="193" fill="#8b949e" font-family="system-ui, sans-serif" font-size="11.5" text-anchor="middle">IQR Boundary Capping</text>
+  <rect x="255" y="214" width="150" height="32" rx="6" fill="#21262d"/>
+  <text x="330" y="235" fill="#8b949e" font-family="system-ui, sans-serif" font-size="11.5" text-anchor="middle">Engineered Features</text>
+  
+  <line x1="420" y1="170" x2="462" y2="170" stroke="#1f6feb" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <rect x="470" y="80" width="200" height="180" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="570" y="110" fill="#f0f6fc" font-family="system-ui, sans-serif" font-size="14" font-weight="600" text-anchor="middle">3. Model Training</text>
+  <rect x="485" y="130" width="170" height="32" rx="6" fill="#21262d"/>
+  <text x="570" y="151" fill="#539bf5" font-family="system-ui, sans-serif" font-size="12" font-weight="500" text-anchor="middle">Linear &amp; Ridge Regr.</text>
+  <rect x="485" y="172" width="170" height="32" rx="6" fill="#21262d"/>
+  <text x="570" y="193" fill="#539bf5" font-family="system-ui, sans-serif" font-size="12" font-weight="500" text-anchor="middle">Random Forest (300 trees)</text>
+  <rect x="485" y="214" width="170" height="32" rx="6" fill="#21262d"/>
+  <text x="570" y="235" fill="#539bf5" font-family="system-ui, sans-serif" font-size="12" font-weight="500" text-anchor="middle">Gradient Boosting Regr.</text>
+  
+  <line x1="670" y1="170" x2="712" y2="170" stroke="#1f6feb" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <rect x="720" y="80" width="150" height="180" rx="10" fill="#161b22" stroke="#1f6feb" stroke-width="2"/>
+  <text x="795" y="110" fill="#539bf5" font-family="system-ui, sans-serif" font-size="14" font-weight="600" text-anchor="middle">4. Web Inference</text>
+  <circle cx="795" cy="155" r="26" fill="#1f6feb" fill-opacity="0.2" stroke="#1f6feb" stroke-width="2"/>
+  <text x="795" y="161" fill="#f0f6fc" font-family="system-ui, sans-serif" font-size="18" font-weight="700" text-anchor="middle">₹</text>
+  <text x="795" y="206" fill="#f0f6fc" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle">Estimated Value</text>
+  <text x="795" y="226" fill="#8b949e" font-family="system-ui, sans-serif" font-size="11" text-anchor="middle">Smooth Depreciation</text>
+  <text x="795" y="242" fill="#8b949e" font-family="system-ui, sans-serif" font-size="11" text-anchor="middle">95% Confidence Band</text>
+</svg>
