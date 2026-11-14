@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 700 380">
+  <rect width="700" height="380" fill="#11161d" rx="12"/>
+  <text x="350" y="28" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#f0f6fc" text-anchor="middle">Mileage Sensitivity Fix: Step Function → Smooth tanh</text>
+  <text x="350" y="372" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Fix applied in valuation.py · Prevents tree leaf plateaus from stalling predictions</text>
+
+  <!-- Axes -->
+  <line x1="80" y1="40" x2="80" y2="320" stroke="#30363d" stroke-width="1.5"/>
+  <line x1="80" y1="320" x2="620" y2="320" stroke="#30363d" stroke-width="1.5"/>
+
+  <!-- Y labels -->
+  <text x="72" y="44" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="end">1.3</text>
+  <text x="72" y="124" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="end">1.1</text>
+  <text x="72" y="164" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="end">1.0</text>
+  <text x="72" y="204" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="end">0.9</text>
+  <text x="72" y="284" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="end">0.7</text>
+  <text x="20" y="185" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle" transform="rotate(-90,20,185)">Price Multiplier</text>
+
+  <!-- X labels -->
+  <text x="80" y="334" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">0</text>
+  <text x="215" y="334" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">50k</text>
+  <text x="350" y="334" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">100k</text>
+  <text x="485" y="334" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">150k</text>
+  <text x="620" y="334" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">200k</text>
+  <text x="350" y="348" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">Kilometres Driven</text>
+
+  <!-- Grid -->
+  <line x1="80" y1="160" x2="620" y2="160" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>
+  <line x1="350" y1="40" x2="350" y2="320" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4" opacity="0.3"/>
+
+  <!-- Before (red staircase) -->
+  <path d="M 80.0,80.0 L 188.0,80.0 L 188.0,120.0 L 296.0,120.0 L 296.0,160.0 L 404.0,160.0 L 404.0,200.0 L 512.0,200.0 L 512.0,248.0 L 620.0,248.0 L 620.0,288.0" fill="none" stroke="#f85149" stroke-width="2.2" stroke-linejoin="round"/>
+
+  <!-- After (green tanh) -->
+  <path d="M 80.0,121.9 L 93.5,123.3 L 107.0,124.7 L 120.5,126.2 L 134.0,127.8 L 147.5,129.4 L 161.0,131.1 L 174.5,132.9 L 188.0,134.7 L 201.5,136.6 L 215.0,138.5 L 228.5,140.5 L 242.0,142.5 L 255.5,144.6 L 269.0,146.7 L 282.5,148.9 L 296.0,151.1 L 309.5,153.3 L 323.0,155.5 L 336.5,157.8 L 350.0,160.0 L 363.5,162.2 L 377.0,164.5 L 390.5,166.7 L 404.0,168.9 L 417.5,171.1 L 431.0,173.3 L 444.5,175.4 L 458.0,177.5 L 471.5,179.5 L 485.0,181.5 L 498.5,183.4 L 512.0,185.3 L 525.5,187.1 L 539.0,188.9 L 552.5,190.6 L 566.0,192.2 L 579.5,193.8 L 593.0,195.3 L 606.5,196.7 L 620.0,198.1" fill="none" stroke="#3fb950" stroke-width="2.2" stroke-linejoin="round"/>
+
+  <!-- Annotation: Δ=0 zone -->
+  <rect x="188" y="122" width="108" height="76" rx="4" fill="#f85149" fill-opacity="0.08" stroke="#f85149" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="242" y="160" font-family="system-ui,sans-serif" font-size="9" fill="#f85149" text-anchor="middle">Δ=0 zone</text>
+
+  <!-- Annotation: every 3000km -->
+  <line x1="350" y1="160" x2="431" y2="208" stroke="#3fb950" stroke-width="1" opacity="0.6"/>
+  <text x="439" y="216" font-family="system-ui,sans-serif" font-size="9" fill="#3fb950">Every 3,000 km</text>
+  <text x="439" y="228" font-family="system-ui,sans-serif" font-size="9" fill="#3fb950">→ ≥₹200 change</text>
+
+  <!-- Legend -->
+  <line x1="160" y1="358" x2="185" y2="358" stroke="#f85149" stroke-width="2.2"/>
+  <text x="190" y="362" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e">Before (Tree Steps)</text>
+  <line x1="340" y1="358" x2="365" y2="358" stroke="#3fb950" stroke-width="2.2"/>
+  <text x="370" y="362" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e">After (tanh Curve)</text>
+</svg>

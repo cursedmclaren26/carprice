@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 700 420">
+  <rect width="700" height="420" fill="#11161d" rx="12"/>
+  <text x="350" y="30" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#f0f6fc" text-anchor="middle">Model Architecture Comparison</text>
+  <text x="350" y="410" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">All trained with Grouped 5-Fold Cross-Validation on car model name groups</text>
+
+  <!-- Card 1: Ridge -->
+  <rect x="20" y="50" width="200" height="320" rx="10" fill="#1a2332" stroke="#30363d" stroke-width="1.5"/>
+  <rect x="20" y="50" width="200" height="44" rx="10" fill="#1f2d3d"/>
+  <rect x="20" y="80" width="200" height="14" fill="#1f2d3d"/>
+  <text x="120" y="78" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#8b949e" text-anchor="middle">#1 Baseline</text>
+  <!-- icon: simple line -->
+  <line x1="60" y1="130" x2="180" y2="110" stroke="#539bf5" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="60" cy="130" r="3" fill="#539bf5"/>
+  <circle cx="120" cy="120" r="3" fill="#539bf5"/>
+  <circle cx="180" cy="110" r="3" fill="#539bf5"/>
+  <text x="120" y="165" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#f0f6fc" text-anchor="middle">Ridge Regression</text>
+  <text x="120" y="195" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">α=1.0, L2 Penalty</text>
+  <text x="120" y="210" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">OHE + StandardScaler</text>
+  <line x1="40" y1="230" x2="200" y2="230" stroke="#30363d" stroke-width="1"/>
+  <text x="120" y="265" font-family="system-ui,sans-serif" font-size="11" fill="#8b949e" text-anchor="middle">CV R²</text>
+  <text x="120" y="295" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#539bf5" text-anchor="middle">0.671</text>
+
+  <!-- Card 2: Random Forest -->
+  <rect x="250" y="50" width="200" height="320" rx="10" fill="#1a2332" stroke="#30363d" stroke-width="1.5"/>
+  <rect x="250" y="50" width="200" height="44" rx="10" fill="#1f2d3d"/>
+  <rect x="250" y="80" width="200" height="14" fill="#1f2d3d"/>
+  <text x="350" y="78" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#8b949e" text-anchor="middle">#2 Ensemble</text>
+  <!-- icon: tree branches -->
+  <line x1="350" y1="100" x2="350" y2="115" stroke="#3fb950" stroke-width="2"/>
+  <line x1="350" y1="115" x2="320" y2="135" stroke="#3fb950" stroke-width="2"/>
+  <line x1="350" y1="115" x2="380" y2="135" stroke="#3fb950" stroke-width="2"/>
+  <line x1="320" y1="135" x2="308" y2="148" stroke="#3fb950" stroke-width="1.5"/>
+  <line x1="320" y1="135" x2="332" y2="148" stroke="#3fb950" stroke-width="1.5"/>
+  <line x1="380" y1="135" x2="368" y2="148" stroke="#3fb950" stroke-width="1.5"/>
+  <line x1="380" y1="135" x2="392" y2="148" stroke="#3fb950" stroke-width="1.5"/>
+  <text x="350" y="165" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#f0f6fc" text-anchor="middle">Random Forest</text>
+  <text x="350" y="195" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">n=300, max_features=0.8</text>
+  <text x="350" y="210" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">min_samples_leaf=4</text>
+  <line x1="270" y1="230" x2="430" y2="230" stroke="#30363d" stroke-width="1"/>
+  <text x="350" y="265" font-family="system-ui,sans-serif" font-size="11" fill="#8b949e" text-anchor="middle">CV R²</text>
+  <text x="350" y="295" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#539bf5" text-anchor="middle">0.812</text>
+
+  <!-- Card 3: Champion -->
+  <rect x="480" y="50" width="200" height="320" rx="10" fill="#1a2a3f" stroke="#539bf5" stroke-width="2"/>
+  <rect x="480" y="50" width="200" height="44" rx="10" fill="#1f3a5f"/>
+  <rect x="480" y="80" width="200" height="14" fill="#1f3a5f"/>
+  <text x="580" y="78" font-family="system-ui,sans-serif" font-size="11" font-weight="600" fill="#79c0ff" text-anchor="middle">#3 Champion ★</text>
+  <!-- icon: sequential boost bars -->
+  <rect x="525" y="145" width="12" height="10" rx="2" fill="#539bf5" opacity="0.5"/>
+  <rect x="541" y="135" width="12" height="20" rx="2" fill="#539bf5" opacity="0.7"/>
+  <rect x="557" y="122" width="12" height="33" rx="2" fill="#539bf5" opacity="0.85"/>
+  <rect x="573" y="112" width="12" height="43" rx="2" fill="#539bf5"/>
+  <rect x="589" y="105" width="12" height="50" rx="2" fill="#79c0ff"/>
+  <text x="580" y="175" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#f0f6fc" text-anchor="middle">HistGradBoost</text>
+  <text x="580" y="200" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">lr=0.05, max_leaves=63</text>
+  <text x="580" y="215" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">max_iter=600, l2=0.5</text>
+  <line x1="500" y1="235" x2="660" y2="235" stroke="#539bf5" stroke-width="1" opacity="0.4"/>
+  <text x="580" y="265" font-family="system-ui,sans-serif" font-size="11" fill="#8b949e" text-anchor="middle">CV R²</text>
+  <text x="580" y="300" font-family="system-ui,sans-serif" font-size="24" font-weight="700" fill="#79c0ff" text-anchor="middle">0.849</text>
+  <text x="580" y="350" font-family="system-ui,sans-serif" font-size="10" fill="#3fb950" text-anchor="middle">★ Best Model</text>
+</svg>

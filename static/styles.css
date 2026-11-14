@@ -684,3 +684,22 @@ figcaption {
   .pill-switcher { bottom: 16px; padding: 5px 6px; }
   .pill-btn { padding: 7px 14px; font-size: 13px; }
 }
+
+/* ============================================
+   BENCHMARK TABLE BADGE STATUSES
+   ============================================ */
+.badge-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.badge-status.baseline { background: rgba(139, 148, 158, 0.15); color: #8b949e; border: 1px solid #30363d; }
+.badge-status.improved { background: rgba(83, 155, 245, 0.12); color: #539bf5; border: 1px solid #1f6feb; }
+.badge-status.good     { background: rgba(63, 185, 80, 0.12);  color: #3fb950; border: 1px solid #238636; }
+.badge-status.champion { background: rgba(83, 155, 245, 0.2);  color: #79c0ff; border: 1px solid #539bf5; font-weight: 700; }
+
+.champion-row td { background: rgba(83, 155, 245, 0.05); }
+.champion-row:first-child td { border-top: 1px solid rgba(83, 155, 245, 0.2); }

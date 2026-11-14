@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 700 400">
+  <rect width="700" height="400" fill="#11161d" rx="12"/>
+  <text x="350" y="28" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#f0f6fc" text-anchor="middle">Residual Analysis — Actual vs Predicted</text>
+  <text x="350" y="392" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">HistGradientBoosting · Grouped K-Fold holdout set predictions</text>
+
+  <!-- Axes -->
+  <line x1="80" y1="40" x2="80" y2="340" stroke="#30363d" stroke-width="1.5"/>
+  <line x1="80" y1="340" x2="620" y2="340" stroke="#30363d" stroke-width="1.5"/>
+  <text x="350" y="358" font-family="system-ui,sans-serif" font-size="11" fill="#8b949e" text-anchor="middle">Predicted Price (₹ Lakhs)</text>
+  <text x="20" y="190" font-family="system-ui,sans-serif" font-size="11" fill="#8b949e" text-anchor="middle" transform="rotate(-90,20,190)">Actual Price (₹ Lakhs)</text>
+
+  <!-- Perfect fit diagonal -->
+  <line x1="80.0" y1="340.0" x2="620.0" y2="40.0" stroke="#539bf5" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.6"/>
+
+  <!-- Dots -->
+  <circle cx="126.7" cy="311.5" r="4" fill="#3fb950" opacity="0.75"/><circle cx="96.3" cy="330.5" r="4" fill="#3fb950" opacity="0.75"/><circle cx="133.7" cy="313.2" r="4" fill="#3fb950" opacity="0.75"/><circle cx="86.3" cy="342.6" r="4" fill="#3fb950" opacity="0.75"/><circle cx="110.8" cy="320.7" r="4" fill="#3fb950" opacity="0.75"/><circle cx="116.9" cy="319.1" r="4" fill="#3fb950" opacity="0.75"/><circle cx="81.9" cy="337.4" r="4" fill="#3fb950" opacity="0.75"/><circle cx="119.8" cy="313.4" r="4" fill="#3fb950" opacity="0.75"/><circle cx="96.1" cy="336.1" r="4" fill="#3fb950" opacity="0.75"/><circle cx="80.5" cy="342.9" r="4" fill="#3fb950" opacity="0.75"/><circle cx="138.8" cy="308.3" r="4" fill="#3fb950" opacity="0.75"/><circle cx="91.3" cy="336.5" r="4" fill="#3fb950" opacity="0.75"/><circle cx="149.9" cy="301.9" r="4" fill="#3fb950" opacity="0.75"/><circle cx="87.1" cy="334.9" r="4" fill="#3fb950" opacity="0.75"/><circle cx="141.8" cy="310.3" r="4" fill="#3fb950" opacity="0.75"/><circle cx="133.3" cy="314.0" r="4" fill="#3fb950" opacity="0.75"/><circle cx="119.1" cy="315.1" r="4" fill="#3fb950" opacity="0.75"/><circle cx="120.3" cy="318.2" r="4" fill="#3fb950" opacity="0.75"/><circle cx="140.5" cy="311.1" r="4" fill="#3fb950" opacity="0.75"/><circle cx="122.1" cy="321.0" r="4" fill="#3fb950" opacity="0.75"/><circle cx="255.8" cy="235.6" r="4" fill="#539bf5" opacity="0.75"/><circle cx="195.2" cy="274.0" r="4" fill="#539bf5" opacity="0.75"/><circle cx="164.6" cy="292.5" r="4" fill="#539bf5" opacity="0.75"/><circle cx="193.5" cy="272.5" r="4" fill="#539bf5" opacity="0.75"/><circle cx="245.7" cy="254.1" r="4" fill="#539bf5" opacity="0.75"/><circle cx="183.5" cy="275.4" r="4" fill="#539bf5" opacity="0.75"/><circle cx="191.9" cy="264.9" r="4" fill="#539bf5" opacity="0.75"/><circle cx="241.9" cy="255.5" r="4" fill="#539bf5" opacity="0.75"/><circle cx="177.9" cy="286.3" r="4" fill="#539bf5" opacity="0.75"/><circle cx="208.4" cy="274.5" r="4" fill="#539bf5" opacity="0.75"/><circle cx="297.4" cy="227.1" r="4" fill="#539bf5" opacity="0.75"/><circle cx="252.9" cy="253.5" r="4" fill="#539bf5" opacity="0.75"/><circle cx="276.0" cy="230.0" r="4" fill="#539bf5" opacity="0.75"/><circle cx="157.7" cy="303.8" r="4" fill="#539bf5" opacity="0.75"/><circle cx="199.0" cy="274.6" r="4" fill="#539bf5" opacity="0.75"/><circle cx="290.6" cy="216.4" r="4" fill="#539bf5" opacity="0.75"/><circle cx="280.9" cy="234.0" r="4" fill="#539bf5" opacity="0.75"/><circle cx="210.7" cy="254.3" r="4" fill="#539bf5" opacity="0.75"/><circle cx="286.4" cy="232.7" r="4" fill="#539bf5" opacity="0.75"/><circle cx="189.0" cy="277.5" r="4" fill="#539bf5" opacity="0.75"/><circle cx="462.8" cy="129.5" r="4" fill="#d29922" opacity="0.75"/><circle cx="561.0" cy="46.0" r="4" fill="#d29922" opacity="0.75"/><circle cx="415.5" cy="140.2" r="4" fill="#d29922" opacity="0.75"/><circle cx="447.6" cy="66.8" r="4" fill="#d29922" opacity="0.75"/><circle cx="325.5" cy="194.3" r="4" fill="#d29922" opacity="0.75"/><circle cx="482.1" cy="113.8" r="4" fill="#d29922" opacity="0.75"/><circle cx="530.1" cy="96.4" r="4" fill="#d29922" opacity="0.75"/><circle cx="410.3" cy="153.0" r="4" fill="#d29922" opacity="0.75"/><circle cx="589.7" cy="109.9" r="4" fill="#d29922" opacity="0.75"/><circle cx="550.2" cy="88.6" r="4" fill="#d29922" opacity="0.75"/>
+
+  <!-- Stat box -->
+  <rect x="90" y="50" width="130" height="52" rx="6" fill="#1a2332" stroke="#30363d" stroke-width="1"/>
+  <text x="155" y="70" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#f0f6fc" text-anchor="middle">R² = 0.877</text>
+  <text x="155" y="88" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">MAE = ₹74.5k</text>
+  <text x="155" y="104" font-family="system-ui,sans-serif" font-size="9" fill="#3fb950" text-anchor="middle">Champion Model</text>
+
+  <!-- Annotations -->
+  <text x="116" y="306" font-family="system-ui,sans-serif" font-size="9" fill="#3fb950" text-anchor="middle">Budget (&lt;₹8L) · Tight fit</text>
+  <text x="226" y="235" font-family="system-ui,sans-serif" font-size="9" fill="#539bf5" text-anchor="middle">Mid-range · Good fit</text>
+  <text x="474" y="81" font-family="system-ui,sans-serif" font-size="9" fill="#d29922" text-anchor="middle">Luxury (&gt;₹18L) · Higher variance</text>
+
+  <!-- Legend -->
+  <circle cx="230" cy="370" r="5" fill="#3fb950"/>
+  <text x="240" y="374" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e">Budget</text>
+  <circle cx="300" cy="370" r="5" fill="#539bf5"/>
+  <text x="310" y="374" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e">Mid-range</text>
+  <circle cx="390" cy="370" r="5" fill="#d29922"/>
+  <text x="400" y="374" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e">Luxury</text>
+</svg>

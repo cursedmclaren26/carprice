@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 700 400">
+  <rect width="700" height="400" fill="#11161d" rx="12"/>
+  <text x="350" y="30" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#f0f6fc" text-anchor="middle">Feature Importance Analysis</text>
+  <text x="350" y="390" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">HistGradientBoostingRegressor permutation importances · Grouped K-Fold CV</text>
+  
+  <text x="162" y="88" font-family="system-ui,sans-serif" font-size="12" fill="#f0f6fc" text-anchor="end">Car_Age</text>
+  <defs><linearGradient id="bg0" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#539bf5"/>
+    <stop offset="100%" stop-color="#1f6feb"/>
+  </linearGradient></defs>
+  <rect x="170" y="70" width="420" height="28" rx="4" fill="url(#bg0)"/>
+  <text x="596" y="88" font-family="system-ui,sans-serif" font-size="11" fill="#f0f6fc">31%</text>
+  <text x="162" y="130" font-family="system-ui,sans-serif" font-size="12" fill="#f0f6fc" text-anchor="end">Kms_Driven</text>
+  <defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#539bf5"/>
+    <stop offset="100%" stop-color="#1f6feb"/>
+  </linearGradient></defs>
+  <rect x="170" y="112" width="298" height="28" rx="4" fill="url(#bg1)"/>
+  <text x="474" y="130" font-family="system-ui,sans-serif" font-size="11" fill="#f0f6fc">22%</text>
+  <text x="162" y="172" font-family="system-ui,sans-serif" font-size="12" fill="#f0f6fc" text-anchor="end">Brand_Tier</text>
+  <defs><linearGradient id="bg2" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#539bf5"/>
+    <stop offset="100%" stop-color="#1f6feb"/>
+  </linearGradient></defs>
+  <rect x="170" y="154" width="243" height="28" rx="4" fill="url(#bg2)"/>
+  <text x="419" y="172" font-family="system-ui,sans-serif" font-size="11" fill="#f0f6fc">18%</text>
+  <text x="162" y="214" font-family="system-ui,sans-serif" font-size="12" fill="#f0f6fc" text-anchor="end">Engine_CC</text>
+  <defs><linearGradient id="bg3" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#539bf5"/>
+    <stop offset="100%" stop-color="#1f6feb"/>
+  </linearGradient></defs>
+  <rect x="170" y="196" width="162" height="28" rx="4" fill="url(#bg3)"/>
+  <text x="338" y="214" font-family="system-ui,sans-serif" font-size="11" fill="#f0f6fc">12%</text>
+  <text x="162" y="256" font-family="system-ui,sans-serif" font-size="12" fill="#f0f6fc" text-anchor="end">Fuel_Type</text>
+  <defs><linearGradient id="bg4" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#539bf5"/>
+    <stop offset="100%" stop-color="#1f6feb"/>
+  </linearGradient></defs>
+  <rect x="170" y="238" width="108" height="28" rx="4" fill="url(#bg4)"/>
+  <text x="284" y="256" font-family="system-ui,sans-serif" font-size="11" fill="#f0f6fc">8%</text>
+  <text x="162" y="298" font-family="system-ui,sans-serif" font-size="12" fill="#f0f6fc" text-anchor="end">Transmission</text>
+  <defs><linearGradient id="bg5" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#539bf5"/>
+    <stop offset="100%" stop-color="#1f6feb"/>
+  </linearGradient></defs>
+  <rect x="170" y="280" width="67" height="28" rx="4" fill="url(#bg5)"/>
+  <text x="243" y="298" font-family="system-ui,sans-serif" font-size="11" fill="#f0f6fc">5%</text>
+  <text x="162" y="340" font-family="system-ui,sans-serif" font-size="12" fill="#f0f6fc" text-anchor="end">Owner</text>
+  <defs><linearGradient id="bg6" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#539bf5"/>
+    <stop offset="100%" stop-color="#1f6feb"/>
+  </linearGradient></defs>
+  <rect x="170" y="322" width="54" height="28" rx="4" fill="url(#bg6)"/>
+  <text x="230" y="340" font-family="system-ui,sans-serif" font-size="11" fill="#f0f6fc">4%</text>
+</svg>

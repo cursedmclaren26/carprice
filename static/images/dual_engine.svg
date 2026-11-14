@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 700 420">
+  <rect width="700" height="420" fill="#11161d" rx="12"/>
+  <text x="350" y="28" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#f0f6fc" text-anchor="middle">Production Dual-Engine Valuation Formula</text>
+  <text x="350" y="412" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Ensures smooth predictions for unseen cars via physics fallback</text>
+
+  <!-- User Input box -->
+  <rect x="275" y="40" width="150" height="44" rx="8" fill="#1a2a3f" stroke="#539bf5" stroke-width="1.5"/>
+  <text x="350" y="67" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#f0f6fc" text-anchor="middle">User Input</text>
+
+  <!-- Split arrows -->
+  <line x1="275" y1="62" x2="175" y2="130" stroke="#539bf5" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="425" y1="62" x2="525" y2="130" stroke="#539bf5" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M1,1 L7,4 L1,7 Z" fill="#539bf5"/>
+    </marker>
+    <marker id="arr2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M1,1 L7,4 L1,7 Z" fill="#8b949e"/>
+    </marker>
+  </defs>
+
+  <!-- Path A: Physics -->
+  <rect x="60" y="130" width="230" height="50" rx="8" fill="#1f4068" stroke="#539bf5" stroke-width="1.2"/>
+  <text x="175" y="151" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#79c0ff" text-anchor="middle">Physics-Based</text>
+  <text x="175" y="167" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">Depreciation Engine</text>
+
+  <rect x="60" y="210" width="230" height="60" rx="8" fill="#1f4068" stroke="#30363d" stroke-width="1"/>
+  <text x="175" y="230" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">BasePrice × Retention</text>
+  <text x="175" y="244" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">× KmMultiplier</text>
+  <text x="175" y="258" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">× OwnerFactor</text>
+
+  <line x1="175" y1="180" x2="175" y2="210" stroke="#539bf5" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="175" y1="270" x2="265" y2="330" stroke="#539bf5" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Path B: ML -->
+  <rect x="410" y="130" width="230" height="50" rx="8" fill="#2d2f0f" stroke="#d29922" stroke-width="1.2"/>
+  <text x="525" y="151" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#d29922" text-anchor="middle">Learned Market Model</text>
+  <text x="525" y="167" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">HistGradientBoosting</text>
+
+  <rect x="410" y="210" width="230" height="60" rx="8" fill="#2d2f0f" stroke="#30363d" stroke-width="1"/>
+  <text x="525" y="232" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Gradient Boosted</text>
+  <text x="525" y="246" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Tree Prediction</text>
+  <text x="525" y="260" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">600 sequential trees</text>
+
+  <line x1="525" y1="180" x2="525" y2="210" stroke="#d29922" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <line x1="525" y1="270" x2="435" y2="330" stroke="#d29922" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+  <!-- Weighted Blend -->
+  <rect x="265" y="330" width="170" height="50" rx="8" fill="#0d2137" stroke="#539bf5" stroke-width="2"/>
+  <text x="350" y="351" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#79c0ff" text-anchor="middle">Weighted Blend</text>
+  <text x="350" y="368" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">w = 0.1 to 0.3</text>
+
+  <!-- Output -->
+  <line x1="350" y1="380" x2="350" y2="400" stroke="#3fb950" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="350" y="398" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#3fb950" text-anchor="middle">▼ Final Price Output</text>
+
+  <!-- Formula annotation -->
+  <rect x="20" y="310" width="220" height="50" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="130" y="330" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Final = Depr×(1−w) + Market×w</text>
+  <text x="130" y="346" font-family="system-ui,sans-serif" font-size="9" fill="#d29922" text-anchor="middle">w increases for known models</text>
+  <text x="130" y="358" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">in training data</text>
+</svg>

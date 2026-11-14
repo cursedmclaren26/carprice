@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 700 380">
+  <rect width="700" height="380" fill="#11161d" rx="12"/>
+  <!-- Title -->
+  <text x="350" y="30" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#f0f6fc" text-anchor="middle">Vehicle Depreciation Retention Curve</text>
+  <text x="350" y="368" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Source: RETENTION_CURVE from valuation.py · CarDekho dataset empirical fit</text>
+
+  <!-- Grid lines -->
+  <line x1="70" y1="40.0" x2="640" y2="40.0" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>
+  <line x1="70" y1="102.5" x2="640" y2="102.5" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>
+  <line x1="70" y1="165.0" x2="640" y2="165.0" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>
+  <line x1="70" y1="227.5" x2="640" y2="227.5" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4" opacity="0.4"/>
+
+  <!-- Axes -->
+  <line x1="70" y1="40" x2="70" y2="290" stroke="#30363d" stroke-width="1.5"/>
+  <line x1="70" y1="290" x2="640" y2="290" stroke="#30363d" stroke-width="1.5"/>
+
+  <!-- Y axis labels -->
+  <text x="62" y="44.0" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="end">100%</text>
+  <text x="62" y="106.5" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="end">75%</text>
+  <text x="62" y="169.0" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="end">50%</text>
+  <text x="62" y="231.5" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="end">25%</text>
+  <text x="62" y="294.0" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="end">0%</text>
+  <text x="20" y="175" font-family="system-ui,sans-serif" font-size="11" fill="#8b949e" text-anchor="middle" transform="rotate(-90,20,175)">Retained Value %</text>
+
+  <!-- X axis labels -->
+  <text x="70.0" y="305" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">0</text>
+  <text x="184.0" y="305" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">3</text>
+  <text x="298.0" y="305" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">6</text>
+  <text x="412.0" y="305" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">9</text>
+  <text x="526.0" y="305" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">12</text>
+  <text x="640.0" y="305" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">15</text>
+  <text x="355" y="320" font-family="system-ui,sans-serif" font-size="11" fill="#8b949e" text-anchor="middle">Car Age (years)</text>
+
+  <!-- Filled area -->
+  <polygon points="70.0,40.0 108.0,90.0 146.0,110.0 184.0,122.5 222.0,132.5 260.0,142.5 298.0,152.5 336.0,160.0 374.0,167.5 412.0,172.5 450.0,177.5 526.0,187.5 640.0,200.0 640.0,290.0 70.0,290.0" fill="#539bf5" fill-opacity="0.13"/>
+
+  <!-- Indian market avg (dashed) -->
+  <polyline points="70.0,40.0 184.0,95.0 298.0,127.5 412.0,145.0 526.0,160.0 640.0,170.0" fill="none" stroke="#8b949e" stroke-width="1.8" stroke-dasharray="6,4"/>
+
+  <!-- Retention curve -->
+  <polyline points="70.0,40.0 108.0,90.0 146.0,110.0 184.0,122.5 222.0,132.5 260.0,142.5 298.0,152.5 336.0,160.0 374.0,167.5 412.0,172.5 450.0,177.5 526.0,187.5 640.0,200.0" fill="none" stroke="#539bf5" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Annotation dots -->
+  <circle cx="108.0" cy="90.0" r="5" fill="#d29922" stroke="#11161d" stroke-width="1.5"/>
+  <line x1="108.0" y1="90.0" x2="136.0" y2="66.0" stroke="#d29922" stroke-width="1" opacity="0.7"/>
+  <text x="138.0" y="64.0" font-family="system-ui,sans-serif" font-size="10" fill="#d29922">Yr 1: 80%</text>
+
+  <circle cx="260.0" cy="142.5" r="5" fill="#d29922" stroke="#11161d" stroke-width="1.5"/>
+  <line x1="260.0" y1="142.5" x2="288.0" y2="118.5" stroke="#d29922" stroke-width="1" opacity="0.7"/>
+  <text x="290.0" y="116.5" font-family="system-ui,sans-serif" font-size="10" fill="#d29922">Yr 5: 59%</text>
+
+  <!-- Legend -->
+  <rect x="80" y="330" width="14" height="4" rx="2" fill="#539bf5"/>
+  <text x="100" y="336" font-family="system-ui,sans-serif" font-size="10" fill="#f0f6fc">Retention Curve</text>
+  <line x1="195" y1="332" x2="209" y2="332" stroke="#8b949e" stroke-width="1.8" stroke-dasharray="4,3"/>
+  <text x="215" y="336" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e">Indian Market Avg</text>
+</svg>
