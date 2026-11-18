@@ -54,7 +54,7 @@ def _inr(value: float) -> str:
 
 
 def cmd_train(args) -> int:
-    from .market import load_market_raw, prepare_market, save_market, train_market
+    from .market import load_market_raw, prepare_market, save_market, train_market, tune_market
 
     raw_path = Path(args.raw)
     if not raw_path.exists():
@@ -68,15 +68,24 @@ def cmd_train(args) -> int:
     for step, rows in audit.itertuples(index=False):
         print(f"  {step:<48} {rows:>6,}")
 
-    print("\ntraining (cross-validation is grouped by model name, so a fold never\n"
-          "validates on a car whose near-identical siblings it just trained on):\n")
-    model, meta, _ = train_market(features)
+    tune = getattr(args, "tune", False)
+    if tune:
+        print("\nrunning hyperparameter tuning across 4 models (GroupKFold grouped by model):")
+        best, meta, _, comp_df = tune_market(features)
+        save_market(best, meta, args.out, comp_df)
+    else:
+        print("\ntraining (cross-validation is grouped by model name, so a fold never\n"
+              "validates on a car whose near-identical siblings it just trained on):\n")
+        model, meta, _ = train_market(features)
+        save_market(model, meta, args.out)
 
-    save_market(model, meta, args.out)
     features.to_csv(Path(args.out).parent.parent / "data" / "market_features.csv",
                     index=False)
     print(f"\nsaved {args.out}")
     print(f"saved {Path(args.out).with_suffix('.json')}")
+    if tune:
+        print(f"saved {Path(args.out).parent / 'model_comparison.json'}")
+        print(f"saved {Path(args.out).parent / 'model_comparison.csv'}")
     return 0
 
 
@@ -153,7 +162,13 @@ def main(argv: list[str] | None = None) -> int:
     t = sub.add_parser("train", help="train the market model")
     t.add_argument("--raw", default=str(DEFAULT_RAW))
     t.add_argument("--out", default=str(DEFAULT_MODEL))
+    t.add_argument("--tune", action="store_true", help="run systematic hyperparameter tuning across 4 models")
     t.set_defaults(func=cmd_train)
+
+    tune_p = sub.add_parser("tune", help="hyperparameter tuning across 4 models with performance comparison")
+    tune_p.add_argument("--raw", default=str(DEFAULT_RAW))
+    tune_p.add_argument("--out", default=str(DEFAULT_MODEL))
+    tune_p.set_defaults(func=lambda args: cmd_train(argparse.Namespace(tune=True, **vars(args))))
 
     p = sub.add_parser("price", help="value one car")
     p.add_argument("--brand", required=True, help='e.g. "Maruti Suzuki", Hyundai, Kia')

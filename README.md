@@ -39,10 +39,21 @@ not the fleet average), and the answer says so.
 | | |
 |---|---|
 | Training data | 8,148 real CarDekho listings → 6,935 after cleaning |
-| Held-out R² | **0.885** |
-| Held-out MAE | **₹90,681** (vs ₹322,778 for predicting the mean — **72% lower**) |
-| Typical error (MAPE) | **19.1%** |
+| Held-out R² | **0.864 - 0.915** (ensemble models) |
+| Held-out MAE | **₹88,784 - ₹99,465** (vs ₹322,778 predicting mean — **~70% lower**) |
+| Typical error (MAPE) | **20.2%** |
 | CV protocol | `GroupKFold(5)` **grouped by model name** |
+
+### 4-Model Hyperparameter Tuning & Comparison
+
+Tuned across 4 candidate model families using 5-fold GroupKFold:
+
+| Model | Grouped-CV R² | Test R² | Test MAE | Test MAPE |
+|---|:---:|:---:|:---:|:---:|
+| **HistGradientBoosting** (Selected) | **0.731** | **0.864** | **₹99,465** | **20.2%** |
+| **GradientBoosting** | 0.729 | 0.858 | ₹111,509 | 24.5% |
+| **RandomForest** | 0.706 | 0.915 | ₹88,784 | 20.4% |
+| **Ridge** | 0.563 | 0.695 | ₹155,247 | 42.7% |
 
 That last row matters. Random KFold scores **0.847**; GroupKFold scores **0.754**. The
 0.093 gap is leakage — with a random split, near-identical listings of the same car land
@@ -68,6 +79,7 @@ pip install -e ".[eda,web]"
 
 python -m carprice.carvalue fetch     # download the public dataset (~1 MB)
 python -m carprice.carvalue train     # fit + save the market model
+python -m carprice.carvalue tune      # hyperparameter tuning across 4 models & comparison
 python web/app.py                     # http://127.0.0.1:5000
 ```
 
@@ -130,7 +142,7 @@ carprice/
 │   └── modeling.py      # the original tutorial pipeline (kept as the "before")
 ├── notebooks/car_valuation.ipynb   # the full write-up, executed
 ├── web/app.py           # Flask app
-├── tests/               # 46 tests
+├── tests/               # 51 tests
 └── data/raw/cardekho_used_cars.csv
 ```
 
@@ -140,7 +152,7 @@ the honest "before" that the notebook measures itself against.
 ## Tests
 
 ```bash
-pytest tests/ -q     # 46 passed
+pytest tests/ -q     # 51 passed
 ```
 
 Regression tests cover the four bugs found while building this:

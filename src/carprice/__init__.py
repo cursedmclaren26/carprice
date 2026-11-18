@@ -25,6 +25,8 @@ _EXPORTS = {
     "load_market_raw": "market",
     "prepare_market": "market",
     "train_market": "market",
+    "tune_market": "market",
+    "build_market_pipeline": "market",
     "CarQuery": "valuation",
     "CarValuator": "valuation",
     "Valuation": "valuation",

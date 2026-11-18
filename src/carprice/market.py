@@ -22,11 +22,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble import (GradientBoostingRegressor,
+                              HistGradientBoostingRegressor,
+                              RandomForestRegressor)
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, r2_score
-from sklearn.model_selection import GroupKFold, cross_validate, train_test_split
+from sklearn.metrics import (mean_absolute_error, mean_absolute_percentage_error,
+                             r2_score, root_mean_squared_error)
+from sklearn.model_selection import (GridSearchCV, GroupKFold, RandomizedSearchCV,
+                                     cross_validate, train_test_split)
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -149,9 +153,15 @@ def prepare_market(df: pd.DataFrame, *, min_model_rows: int = MIN_MODEL_ROWS,
 # --------------------------------------------------------------------------- #
 # model
 # --------------------------------------------------------------------------- #
-def build_market_pipeline(model: str = "hist_gb") -> Pipeline:
+def build_market_pipeline(model: str = "hist_gb", **kwargs) -> Pipeline:
     """
     Preprocessor + estimator.
+
+    Supports 4 model families:
+      * 'ridge': regularized linear regression (L2)
+      * 'hist_gb': histogram-based gradient boosting regressor
+      * 'random_forest': random forest ensemble
+      * 'gradient_boosting': gradient boosting trees
 
     `OneHotEncoder(handle_unknown="ignore")` is essential: the web app can submit a brand
     or model that never appeared in training, and it must degrade, not raise.
@@ -168,25 +178,223 @@ def build_market_pipeline(model: str = "hist_gb") -> Pipeline:
         remainder="drop",
     )
     if model == "ridge":
-        est = Ridge(alpha=3.0)
+        defaults = {"alpha": 3.0}
+        defaults.update(kwargs)
+        est = Ridge(**defaults)
     elif model == "hist_gb":
-        est = HistGradientBoostingRegressor(
-            max_iter=600, learning_rate=0.05, max_leaf_nodes=63,
-            min_samples_leaf=5, l2_regularization=0.5, random_state=RANDOM_STATE)
+        defaults = {
+            "max_iter": 500, "learning_rate": 0.06, "max_leaf_nodes": 31,
+            "min_samples_leaf": 20, "l2_regularization": 1.0,
+            "random_state": RANDOM_STATE
+        }
+        defaults.update(kwargs)
+        est = HistGradientBoostingRegressor(**defaults)
+    elif model == "random_forest":
+        defaults = {
+            "n_estimators": 150, "max_depth": 20, "min_samples_leaf": 1,
+            "random_state": RANDOM_STATE, "n_jobs": -1
+        }
+        defaults.update(kwargs)
+        est = RandomForestRegressor(**defaults)
+    elif model == "gradient_boosting":
+        defaults = {
+            "n_estimators": 150, "learning_rate": 0.06, "max_depth": 5,
+            "min_samples_leaf": 10, "random_state": RANDOM_STATE
+        }
+        defaults.update(kwargs)
+        est = GradientBoostingRegressor(**defaults)
     else:
-        raise ValueError(f"unknown market model '{model}'")
+        raise ValueError(f"unknown market model '{model}' (choose from: ridge, hist_gb, random_forest, gradient_boosting)")
     return Pipeline([("preprocessor", pre), ("regressor", est)])
 
 
+def tune_market(features: pd.DataFrame, *, test_size: float = 0.2,
+                cv_splits: int = 5, n_iter_search: int = 12,
+                models: tuple[str, ...] = ("ridge", "hist_gb", "random_forest", "gradient_boosting"),
+                verbose: bool = True):
+    """
+    Run systematic hyperparameter tuning across 4 models with performance comparison.
+
+    Cross-validation is strictly grouped by car model (`GroupKFold`) so that a
+    fold never validates on near-identical variants of a car it just trained on.
+
+    Models & Search Strategies:
+      - Ridge: GridSearchCV over regularisation penalty alpha
+      - HistGradientBoosting: RandomizedSearchCV over learning rate, max iterations,
+        max leaf nodes, min samples per leaf, and L2 regularization
+      - RandomForest: RandomizedSearchCV over number of trees, max depth,
+        split / leaf constraints, and feature subsampling
+      - GradientBoosting: RandomizedSearchCV over learning rate, tree count,
+        depth, leaf constraints, and sample fractions
+
+    Returns (best_pipeline, meta_dict, (X_test, y_test, best_pred), comparison_df)
+    """
+    import time
+
+    X = features[MARKET_FEATURES]
+    y = features["price"].astype(float)
+    groups = features["model"]
+
+    X_train, X_test, y_train, y_test, g_train, _ = train_test_split(
+        X, y, groups, test_size=test_size, random_state=RANDOM_STATE, shuffle=True)
+
+    gkf = GroupKFold(n_splits=cv_splits)
+
+    param_spaces = {
+        "ridge": {
+            "search": GridSearchCV,
+            "estimator": build_market_pipeline("ridge"),
+            "params": {
+                "regressor__alpha": [0.01, 0.1, 0.5, 1.0, 3.0, 5.0, 10.0, 20.0, 50.0, 100.0],
+            },
+            "search_kwargs": {}
+        },
+        "hist_gb": {
+            "search": RandomizedSearchCV,
+            "estimator": build_market_pipeline("hist_gb"),
+            "params": {
+                "regressor__learning_rate": [0.03, 0.05, 0.08, 0.1],
+                "regressor__max_iter": [200, 350, 500],
+                "regressor__max_leaf_nodes": [21, 31, 45, 63],
+                "regressor__min_samples_leaf": [10, 20, 30],
+                "regressor__l2_regularization": [0.0, 0.5, 1.0, 3.0],
+            },
+            "search_kwargs": {"n_iter": n_iter_search, "random_state": RANDOM_STATE}
+        },
+        "random_forest": {
+            "search": RandomizedSearchCV,
+            "estimator": build_market_pipeline("random_forest"),
+            "params": {
+                "regressor__n_estimators": [100, 150, 200],
+                "regressor__max_depth": [15, 22, 30, None],
+                "regressor__min_samples_split": [2, 5, 10],
+                "regressor__min_samples_leaf": [1, 2, 4],
+                "regressor__max_features": [1.0, "sqrt", 0.8],
+            },
+            "search_kwargs": {"n_iter": n_iter_search, "random_state": RANDOM_STATE}
+        },
+        "gradient_boosting": {
+            "search": RandomizedSearchCV,
+            "estimator": build_market_pipeline("gradient_boosting"),
+            "params": {
+                "regressor__n_estimators": [100, 150, 200],
+                "regressor__learning_rate": [0.04, 0.08, 0.12],
+                "regressor__max_depth": [3, 4, 5],
+                "regressor__min_samples_leaf": [5, 10, 20],
+                "regressor__subsample": [0.8, 0.9, 1.0],
+            },
+            "search_kwargs": {"n_iter": n_iter_search, "random_state": RANDOM_STATE}
+        }
+    }
+
+    results = {}
+    fitted_pipes = {}
+    test_preds = {}
+
+    if verbose:
+        print(f"\nHyperparameter tuning across {len(models)} models with {cv_splits}-fold GroupKFold...")
+
+    for kind in models:
+        if kind not in param_spaces:
+            raise ValueError(f"unknown model '{kind}' for tuning")
+        cfg = param_spaces[kind]
+        t0 = time.time()
+        search = cfg["search"](
+            cfg["estimator"],
+            cfg["params"],
+            cv=gkf,
+            scoring="r2",
+            n_jobs=-1,
+            refit=True,
+            **cfg["search_kwargs"]
+        )
+        search.fit(X_train, y_train, groups=g_train)
+        best_pipe = search.best_estimator_
+        pred = best_pipe.predict(X_test)
+        dt = time.time() - t0
+
+        fitted_pipes[kind] = best_pipe
+        test_preds[kind] = pred
+
+        cv_r2 = float(search.best_score_)
+        test_r2 = float(r2_score(y_test, pred))
+        test_mae = float(mean_absolute_error(y_test, pred))
+        test_rmse = float(root_mean_squared_error(y_test, pred))
+        test_mape = float(mean_absolute_percentage_error(y_test, pred))
+        best_params = {k.replace("regressor__", ""): v for k, v in search.best_params_.items()}
+
+        results[kind] = {
+            "best_params": best_params,
+            "cv_r2": cv_r2,
+            "test_r2": test_r2,
+            "test_mae": test_mae,
+            "test_rmse": test_rmse,
+            "test_mape": test_mape,
+            "fit_time_sec": round(dt, 1)
+        }
+
+        if verbose:
+            print(f"  {kind:<18} Grouped-CV R2: {cv_r2:.3f} | Test R2: {test_r2:.3f} | "
+                  f"Test MAE: Rs {test_mae:,.0f} | Test MAPE: {test_mape:.1%} | ({dt:.1f}s)")
+            print(f"    best params: {best_params}")
+
+    winner = max(results, key=lambda k: results[k]["cv_r2"])
+    best = fitted_pipes[winner]
+    best_pred = test_preds[winner]
+
+    comparison_rows = []
+    for name, m in results.items():
+        row = {
+            "model": name,
+            "cv_r2": m["cv_r2"],
+            "test_r2": m["test_r2"],
+            "test_mae": m["test_mae"],
+            "test_rmse": m["test_rmse"],
+            "test_mape": m["test_mape"],
+            "fit_time_sec": m["fit_time_sec"],
+            "best_params": m["best_params"],
+        }
+        comparison_rows.append(row)
+    comparison_df = pd.DataFrame(comparison_rows).sort_values("cv_r2", ascending=False)
+
+    meta = {
+        "market_model": winner,
+        "cv": f"GroupKFold({cv_splits}) grouped by model name (Tuned)",
+        "tuned": True,
+        "results": results,
+        "test_metrics": results[winner],
+        "comparison": comparison_rows,
+        "n_train": int(len(X_train)), "n_test": int(len(X_test)),
+        "rows": int(len(features)),
+        "year_min": int(features["year"].min()) if "year" in features else None,
+        "year_max": int(features["year"].max()) if "year" in features else None,
+        "brands": sorted(features["brand"].unique().tolist()),
+        "models_known": sorted(features.loc[features["model"] != "other", "model"]
+                               .unique().tolist()),
+    }
+
+    if verbose:
+        print(f"\nWinner: {winner} (Grouped-CV R2 = {results[winner]['cv_r2']:.4f})")
+
+    return best, meta, (X_test, y_test, best_pred), comparison_df
+
+
 def train_market(features: pd.DataFrame, *, test_size: float = 0.2,
-                 cv_splits: int = 5, verbose: bool = True):
+                 cv_splits: int = 5, tune: bool = False,
+                 models: tuple[str, ...] = ("ridge", "hist_gb", "random_forest", "gradient_boosting"),
+                 verbose: bool = True):
     """
     Fit the market model and report honest metrics.
 
-    Cross-validation is **grouped by model name**, so a fold never validates on a car
-    whose near-identical siblings it just trained on. That is the leak that makes
-    listing-based price models look better than they are on a genuinely new car.
+    If tune=True, runs hyperparameter tuning across the specified models.
+    If tune=False, evaluates all specified models with calibrated defaults using GroupKFold.
     """
+    if tune:
+        best, meta, preds, _ = tune_market(features, test_size=test_size,
+                                           cv_splits=cv_splits, models=models,
+                                           verbose=verbose)
+        return best, meta, preds
+
     X = features[MARKET_FEATURES]
     y = features["price"].astype(float)
     groups = features["model"]
@@ -195,7 +403,7 @@ def train_market(features: pd.DataFrame, *, test_size: float = 0.2,
         X, y, groups, test_size=test_size, random_state=RANDOM_STATE, shuffle=True)
 
     results = {}
-    for kind in ("ridge", "hist_gb"):
+    for kind in models:
         pipe = build_market_pipeline(kind)
         gkf = GroupKFold(n_splits=cv_splits)
         cv = cross_validate(pipe, X_train, y_train, cv=gkf, groups=g_train,
@@ -207,11 +415,12 @@ def train_market(features: pd.DataFrame, *, test_size: float = 0.2,
             "cv_r2_std": float(cv["test_r2"].std()),
             "test_r2": float(r2_score(y_test, pred)),
             "test_mae": float(mean_absolute_error(y_test, pred)),
+            "test_rmse": float(root_mean_squared_error(y_test, pred)),
             "test_mape": float(mean_absolute_percentage_error(y_test, pred)),
         }
         if verbose:
             r = results[kind]
-            print(f"{kind:<10} grouped-CV R2 {r['cv_r2']:.3f} +/- {r['cv_r2_std']:.3f}"
+            print(f"{kind:<18} grouped-CV R2 {r['cv_r2']:.3f} +/- {r['cv_r2_std']:.3f}"
                   f"   test R2 {r['test_r2']:.3f}   MAE Rs {r['test_mae']:,.0f}"
                   f"   MAPE {r['test_mape']:.1%}")
 
@@ -222,6 +431,7 @@ def train_market(features: pd.DataFrame, *, test_size: float = 0.2,
     meta = {
         "market_model": winner,
         "cv": f"GroupKFold({cv_splits}) grouped by model name",
+        "tuned": False,
         "results": results,
         "test_metrics": results[winner],
         "n_train": int(len(X_train)), "n_test": int(len(X_test)),
@@ -240,12 +450,18 @@ def train_market(features: pd.DataFrame, *, test_size: float = 0.2,
 # --------------------------------------------------------------------------- #
 # persistence
 # --------------------------------------------------------------------------- #
-def save_market(pipeline, meta: dict, path: str | Path) -> Path:
+def save_market(pipeline, meta: dict, path: str | Path,
+                comparison_df: pd.DataFrame | None = None) -> Path:
     import joblib, json
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(pipeline, path)
     path.with_suffix(".json").write_text(json.dumps(meta, indent=2))
+    if comparison_df is not None:
+        comp_csv = path.parent / "model_comparison.csv"
+        comp_json = path.parent / "model_comparison.json"
+        comparison_df.to_csv(comp_csv, index=False)
+        comp_json.write_text(json.dumps(meta.get("comparison", []), indent=2))
     return path
 
 

@@ -162,6 +162,7 @@ Both produce:
 ```bash
 carvalue fetch                              # download the dataset
 carvalue train                              # fit + save the model
+carvalue tune                               # hyperparameter tuning across 4 models & comparison
 carvalue price --brand Kia --model Syros --year 2025 --km 6000
 carvalue brands                             # 38 known brands
 carvalue models --brand Hyundai             # models for one brand

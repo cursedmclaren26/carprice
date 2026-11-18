@@ -483,7 +483,7 @@
     </div>
     <div class="doc-body">
       <p>
-        Three machine learning architectures were implemented, tuned, and compared using a rigorous Grouped K-Fold cross-validation protocol to ensure fair evaluation with zero data leakage.
+        Four machine learning architectures (Ridge, Random Forest, Gradient Boosting, HistGB) were systematically tuned and evaluated using a rigorous Grouped K-Fold cross-validation protocol to ensure fair evaluation with zero data leakage.
       </p>
 
       <!-- Sub-section 1 -->
@@ -498,7 +498,7 @@
         <div class="formula-box">
           J(θ) = Σ(yᵢ − ŷᵢ)² + α · Σθⱼ²<br>
           θ* = (XᵀX + αI)⁻¹ Xᵀy<br>
-          α = 1.0 (selected via leave-one-out CV on training fold)
+          α = 50.0 (optimal regularisation penalty via GridSearchCV)
         </div>
         <p>
           One-Hot Encoding was applied to all categorical features (Fuel, Transmission, Owner, Brand) followed by StandardScaler normalization to stabilize gradient convergence and ensure equal regularization pressure across dimensionalities.
@@ -515,9 +515,9 @@
           Random Forest grows <strong>300 fully-independent decision trees</strong> in parallel, each trained on a bootstrapped sample of the data with a random feature subset at each split. The final prediction is the mean of all tree outputs:
         </p>
         <div class="formula-box">
-          ŷ = (1/B) · Σ Tᵦ(x)  where B=300 trees<br>
-          Feature subset per split: √p ≈ 0.8 × total features<br>
-          Min samples per leaf: 4 (prevents single-listing overfitting)
+          ŷ = (1/B) · Σ Tᵦ(x)  where B=100 trees<br>
+          Max depth: 22 · Max features: 'sqrt'<br>
+          Min samples per leaf: 1 · Split threshold: 2
         </div>
         <p>
           Bagging dramatically reduces variance compared to a single tree while remaining robust to individual outlier listings. Each tree independently discovers different interaction pathways between mileage, age, and brand tier.
@@ -537,7 +537,7 @@
           F₀(x) = mean(y) [constant baseline]<br>
           Fₘ(x) = Fₘ₋₁(x) + η · hₘ(x)  [add corrective tree]<br>
           hₘ fitted to: −∂L/∂Fₘ₋₁ [negative gradient of loss]<br>
-          η=0.05, max_iter=600, max_leaf_nodes=63, l2_reg=0.5
+          η=0.05, max_iter=200, max_leaf_nodes=21, min_samples_leaf=30, l2_reg=3.0
         </div>
         <p>
           The low learning rate (η=0.05) with high iterations (600) enables fine-grained residual correction without overfitting. L2 regularization (0.5) prevents individual leaves from capturing listing-specific noise.
@@ -546,6 +546,24 @@
           <img src="{{ url_for('static', filename='images/model_architecture.svg') }}" alt="Model Architecture Comparison" class="doc-img">
           <figcaption>Figure 10: Side-by-side architecture comparison of the three regression models with key hyperparameters and cross-validated scores.</figcaption>
         </figure>
+      </div>
+
+      <!-- Sub-section 3.5: Classic Gradient Boosting -->
+      <div class="pipeline-block">
+        <div class="block-headline">
+          <span class="bullet-dot"></span>
+          <h3>Sequential Ensemble: Gradient Boosting Regressor (sklearn GBR)</h3>
+        </div>
+        <p>
+          Classic Gradient Boosting sequentially minimizes squared residual loss with tree shrinkage. Tuned via RandomizedSearchCV with sub-sampling for stochastic regularization:
+        </p>
+        <div class="formula-box">
+          Trees (B): 200 · Learning rate (η): 0.04<br>
+          Max depth: 3 · Min samples per leaf: 20 · Subsample ratio: 0.8
+        </div>
+        <p>
+          Subsampling 80% of rows at each iteration adds stochastic variance reduction, producing strong Grouped-CV generalizability (R² = 0.729).
+        </p>
       </div>
 
       <!-- Sub-section 4 -->
@@ -601,35 +619,35 @@
           </thead>
           <tbody>
             <tr>
-              <td><strong>Linear Regression</strong></td>
-              <td>0.648 ± 0.04</td>
-              <td>0.682</td>
-              <td>₹1,42,000</td>
-              <td>28.4%</td>
+              <td><strong>Ridge Regression</strong></td>
+              <td>0.563 ± 0.12</td>
+              <td>0.695</td>
+              <td>₹1,55,247</td>
+              <td>42.7%</td>
               <td><span class="badge-status baseline">Baseline</span></td>
             </tr>
             <tr>
-              <td><strong>Ridge Regression</strong></td>
-              <td>0.671 ± 0.03</td>
-              <td>0.714</td>
-              <td>₹1,34,000</td>
-              <td>26.1%</td>
-              <td><span class="badge-status improved">Improved</span></td>
+              <td><strong>Random Forest</strong></td>
+              <td>0.706 ± 0.07</td>
+              <td>0.915</td>
+              <td>₹88,784</td>
+              <td>20.4%</td>
+              <td><span class="badge-status good">Strong Test</span></td>
             </tr>
             <tr>
-              <td><strong>Random Forest</strong></td>
-              <td>0.812 ± 0.02</td>
-              <td>0.852</td>
-              <td>₹82,000</td>
-              <td>19.8%</td>
-              <td><span class="badge-status good">Strong</span></td>
+              <td><strong>Gradient Boosting</strong></td>
+              <td>0.729 ± 0.06</td>
+              <td>0.858</td>
+              <td>₹1,11,509</td>
+              <td>24.5%</td>
+              <td><span class="badge-status improved">High CV</span></td>
             </tr>
             <tr class="champion-row">
               <td><strong>HistGradientBoosting ★</strong></td>
-              <td>0.849 ± 0.02</td>
-              <td>0.877</td>
-              <td>₹74,500</td>
-              <td>16.8%</td>
+              <td>0.731 ± 0.06</td>
+              <td>0.864</td>
+              <td>₹99,465</td>
+              <td>20.2%</td>
               <td><span class="badge-status champion">Champion</span></td>
             </tr>
           </tbody>
