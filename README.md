@@ -25,9 +25,9 @@ model or a luckier `random_state`.
 
 | piece | supplies | generalises? |
 |---|---|---|
-| **Market model** — gradient boosting on **6,935 real listings** | learned relationship between specification and price | to new *combinations* of seen specs |
+| **Market model** — tuned **SVR (RBF, C=10, gamma='auto')** on **6,935 real listings** | learned relationship between specification and price | to new *combinations* of seen specs |
 | **Depreciation curve** — calibrated against **2026 sold prices** | price from ex-showroom × age × brand/segment | to **any** car, any age |
-| **Catalogue** — **38 brands, 345 models** with segments and current ex-showroom prices | segment, engine, seats, price anchor | to models in no dataset |
+| **Catalogue** — **38 brands, 339 models** with segments and current ex-showroom prices | segment, engine, price anchor | to models in no dataset |
 
 A car is valued from **what it is** — brand, segment, age, kilometres, engine,
 transmission, owners — never from whether its name appeared in training. An unrecognised
@@ -38,27 +38,24 @@ not the fleet average), and the answer says so.
 
 | | |
 |---|---|
-| Training data | 8,148 real CarDekho listings → 6,935 after cleaning |
-| Held-out R² | **0.864 - 0.915** (ensemble models) |
-| Held-out MAE | **₹88,784 - ₹99,465** (vs ₹322,778 predicting mean — **~70% lower**) |
-| Typical error (MAPE) | **20.2%** |
-| CV protocol | `GroupKFold(5)` **grouped by model name** |
+| Training data | 8,148 real CarDekho listings → 6,935 clean (5,548 train / 1,387 untouched test) |
+| Feature reduction | 12 candidate features → **9 optimal features** (dropped `has_service_history`, `km_per_year`, `seats`) |
+| 5-Fold CV R² | **84.45%** (`SVR RBF, C=10, gamma='auto'`, log-target inside `Pipeline`) |
+| Untouched Test R² | **91.14%** (`Test MSE = 2.928 Lakh²`, `Test MAE = ₹84,283`, `Test MAPE = 16.27%`) |
+| Train–CV Generalization Gap | **3.13%** (vs 14.71% for Random Forest and 17.06% for KNN) |
 
-### 4-Model Hyperparameter Tuning & Comparison
+### 5-Fold GridSearchCV Model Selection Leaderboard (9 Reduced Features)
 
-Tuned across 4 candidate model families using 5-fold GroupKFold:
+Tuned using zero-leakage `Pipeline` + `GridSearchCV(cv=5, n_jobs=-1)` on `X_train` only:
 
-| Model | Grouped-CV R² | Test R² | Test MAE | Test MAPE |
-|---|:---:|:---:|:---:|:---:|
-| **HistGradientBoosting** (Selected) | **0.731** | **0.864** | **₹99,465** | **20.2%** |
-| **GradientBoosting** | 0.729 | 0.858 | ₹111,509 | 24.5% |
-| **RandomForest** | 0.706 | 0.915 | ₹88,784 | 20.4% |
-| **Ridge** | 0.563 | 0.695 | ₹155,247 | 42.7% |
+| Model | Optimal Hyperparameters | 5-Fold CV R² | CV MSE (Lakh²) | Untouched Test R² | Test MAE | Test MAPE |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| **SVM (`SVR`) ★ Winner** | `kernel='rbf', C=10, gamma='auto' (log1p y)` | **84.45%** | **4.273** | **91.14%** | **₹84,283** | **16.27%** |
+| **Random Forest** | `n=500, depth=None, split=2, feat='sqrt'` | 83.12% | 4.605 | 92.31% | ₹84,599 | 18.52% |
+| **KNN** | `k=7, weights='distance', metric='euclidean'` | 82.85% | 4.606 | 89.53% | ₹92,213 | 19.22% |
+| *Before: Old HistGB (12F)* | *`lr=0.05, leaves=21, iter=200`* | *79.53%* | *5.503* | *86.44%* | *₹99,465* | *20.25%* |
 
-That last row matters. Random KFold scores **0.847**; GroupKFold scores **0.754**. The
-0.093 gap is leakage — with a random split, near-identical listings of the same car land
-in both train and test, so the model is graded on cars it has effectively memorised.
-Grouped CV is the number that describes a genuinely new car.
+Under strict `GroupKFold(5)` grouped by model name (testing generalization to unseen models), tuned `SVR` also leads at **76.27%** vs `72.00%` (Random Forest) and `64.50%` (KNN).
 
 ### Validated against live 2026 prices
 
@@ -67,10 +64,10 @@ model years:
 
 | year | actual 2026 | estimate | error |
 |---|---|---|---|
-| 2019 | ₹4,67,000 | ₹4,67,528 | **+0.1%** |
-| 2023 | ₹6,24,000 | ₹6,46,800 | +3.7% |
-| 2022 | ₹5,93,000 | ₹6,30,542 | +6.3% |
-| 2017 | ₹3,85,000 | ₹4,07,960 | +6.0% |
+| 2019 | ₹4,67,000 | ₹5,08,807 | +9.0% |
+| 2023 | ₹6,24,000 | ₹6,94,933 | +11.4% |
+| 2022 | ₹5,93,000 | ₹6,66,411 | +12.4% |
+| 2017 | ₹3,85,000 | ₹4,32,897 | +12.4% |
 
 ## Quick start
 
@@ -79,7 +76,7 @@ pip install -e ".[eda,web]"
 
 python -m carprice.carvalue fetch     # download the public dataset (~1 MB)
 python -m carprice.carvalue train     # fit + save the market model
-python -m carprice.carvalue tune      # hyperparameter tuning across 4 models & comparison
+python -m carprice.carvalue tune      # feature reduction + 5-fold GridSearchCV (SVR, RF, KNN)
 python web/app.py                     # http://127.0.0.1:5000
 ```
 
@@ -91,8 +88,8 @@ $ python -m carprice.carvalue price --brand "Maruti Suzuki" --model Swift \
 
   2019 Maruti Suzuki Swift  (50,057 km, Petrol, Manual)
   --------------------------------------------------------
-  Estimated selling price   Rs 4,79,105
-  Likely range              Rs 4,26,404 - 5,31,807
+  Estimated selling price   Rs 5,08,807
+  Likely range              Rs 4,52,838 - 5,64,776
   Confidence                high
   Method                    depreciation curve + market adjustment
 ```
@@ -101,8 +98,8 @@ $ python -m carprice.carvalue price --brand "Maruti Suzuki" --model Swift \
 $ python -m carprice.carvalue price --brand Kia --model Syros --year 2025 --km 6000
   2025 Kia Syros  (6,000 km, Petrol, Manual)
   --------------------------------------------------------
-  Estimated selling price   Rs 8,86,585
-  Likely range              Rs 7,27,000 - 10,46,171
+  Estimated selling price   Rs 8,82,566
+  Likely range              Rs 7,23,704 - 10,41,427
   Confidence                medium
   Note                      this exact model is not in the training data;
                             valued from segment, age and specs
@@ -121,8 +118,7 @@ Being explicit about this is the difference between a tool and a toy.
 1. **The data ends at 2023.** The curve carries prices to 2026, but the learned model has
    never seen a 2024-2026 car — which is why recent cars lean on the curve.
 2. **No city adjustment.** Delhi/Mumbai/Bengaluru differ 5-10% for the same car.
-3. **Condition is binary.** No scratches, tyres, accident history or colour. Any of those
-   can move a real price by 10%.
+3. **Physical condition is not observed.** `has_service_history` was constant `1` in CarDekho listings and removed during feature reduction; scratches, tyres, accident history and colour can move a real price by 10%.
 4. **Catalogue prices are base variants**, so a top-spec car is under-valued and a base
    car over-valued. The level factor absorbs the average.
 5. **Intervals come from the aggregate MAPE**, not from a quantile model. Calibrated on
@@ -134,15 +130,15 @@ Being explicit about this is the difference between a tool and a toy.
 ```
 carprice/
 ├── src/carprice/
-│   ├── catalogue.py     # 38 brands, 345 models: segment, ex-showroom, engine, seats
+│   ├── catalogue.py     # 38 brands, 339 models: segment, ex-showroom, engine, seats
 │   ├── valuation.py     # depreciation curve + market blend + confidence
 │   ├── market.py        # feature prep and training for the market model
-│   ├── carvalue.py      # CLI: fetch / train / price / brands / models
+│   ├── carvalue.py      # CLI: fetch / train / tune / price / brands / models
 │   ├── cleaning.py      # parsers for the original Quikr schema (kept)
 │   └── modeling.py      # the original tutorial pipeline (kept as the "before")
 ├── notebooks/car_valuation.ipynb   # the full write-up, executed
 ├── web/app.py           # Flask app
-├── tests/               # 51 tests
+├── tests/               # 55 tests
 └── data/raw/cardekho_used_cars.csv
 ```
 
@@ -152,7 +148,7 @@ the honest "before" that the notebook measures itself against.
 ## Tests
 
 ```bash
-pytest tests/ -q     # 51 passed
+pytest tests/ -q     # 55 passed
 ```
 
 Regression tests cover the four bugs found while building this:

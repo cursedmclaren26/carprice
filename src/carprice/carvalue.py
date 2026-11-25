@@ -70,12 +70,11 @@ def cmd_train(args) -> int:
 
     tune = getattr(args, "tune", False)
     if tune:
-        print("\nrunning hyperparameter tuning across 4 models (GroupKFold grouped by model):")
+        print("\nrunning correlation analysis, feature reduction & 5-fold GridSearchCV (SVM, Random Forest, KNN):")
         best, meta, _, comp_df = tune_market(features)
         save_market(best, meta, args.out, comp_df)
     else:
-        print("\ntraining (cross-validation is grouped by model name, so a fold never\n"
-              "validates on a car whose near-identical siblings it just trained on):\n")
+        print("\ntraining (5-fold CV & GroupKFold verification on reduced 9-feature pipeline):\n")
         model, meta, _ = train_market(features)
         save_market(model, meta, args.out)
 

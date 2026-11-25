@@ -27,6 +27,8 @@ _EXPORTS = {
     "train_market": "market",
     "tune_market": "market",
     "build_market_pipeline": "market",
+    "compute_training_correlations": "market",
+    "iterative_feature_reduction": "market",
     "CarQuery": "valuation",
     "CarValuator": "valuation",
     "Valuation": "valuation",

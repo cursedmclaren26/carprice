@@ -270,28 +270,24 @@ class CarValuator:
 
     def market_features(self, q: CarQuery, brand: str, model: str,
                         spec: ModelSpec | None, segment: str) -> pd.DataFrame:
+        """Build a 1-row feature frame aligned with the 9 reduced MARKET_FEATURES."""
         # NB: `or` / truthiness is wrong here — an EV legitimately has engine_cc == 0,
         # and `if engine` silently discarded it, leaving the row to be imputed.
         engine = q.engine_cc if q.engine_cc is not None else (
             spec.engine_cc if spec is not None else np.nan)
-        seats = q.seats if q.seats is not None else (
-            spec.seats if spec is not None else np.nan)
         row = {
             "brand": brand,
             "model": model,
             "segment": segment,
             "age": q.age,
             "kms_driven": float(q.kms_driven),
-            "km_per_year": float(q.kms_driven) / max(q.age, 1.0),
             "fuel": q.fuel,
             "transmission": q.transmission,
             "owner": q.owner,
             # `float(x) if x else nan` would turn an EV's 0 into NaN — use `is not None`
             "engine_cc": float(engine) if engine is not None and not _isnan(engine) else np.nan,
-            "seats": float(seats) if seats is not None and not _isnan(seats) else np.nan,
-            "has_service_history": int(bool(q.service_history)),
         }
-        return pd.DataFrame([row])
+        return pd.DataFrame([row], columns=MARKET_FEATURES)
 
     # -- the estimate --------------------------------------------------------
     def value(self, q: CarQuery) -> Valuation:
@@ -444,11 +440,18 @@ def _guess_segment(model_name: str, q: CarQuery) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# What the market model needs
+# What the market model needs (9 optimal reduced features after correlation
+# analysis + iterative feature reduction dropped has_service_history,
+# km_per_year, and seats)
 # --------------------------------------------------------------------------- #
-MARKET_FEATURES = ["brand", "model", "segment", "age", "kms_driven", "km_per_year",
-                   "fuel", "transmission", "owner", "engine_cc", "seats",
-                   "has_service_history"]
+ALL_CANDIDATE_FEATURES = [
+    "brand", "model", "segment", "age", "kms_driven", "km_per_year",
+    "fuel", "transmission", "owner", "engine_cc", "seats", "has_service_history",
+]
+DROPPED_LOW_CORR_FEATURES = ["has_service_history", "km_per_year", "seats"]
+
+MARKET_FEATURES = ["brand", "model", "segment", "age", "kms_driven",
+                   "fuel", "transmission", "owner", "engine_cc"]
 CATEGORICAL_FEATURES = ["brand", "model", "segment", "fuel", "transmission", "owner"]
-NUMERIC_FEATURES = ["age", "kms_driven", "km_per_year", "engine_cc", "seats"]
-BINARY_FEATURES = ["has_service_history"]
+NUMERIC_FEATURES = ["age", "kms_driven", "engine_cc"]
+BINARY_FEATURES: list[str] = []

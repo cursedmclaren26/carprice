@@ -7,6 +7,10 @@ Unlike the tutorial's form, the model field is **free text with suggestions**: y
 type a car that appears in no dataset (a 2026 Kia Clavis, a Tesla) and still get a price,
 because valuation falls back to segment + specification rather than to a lookup table.
 
+Supports both standard form submission (`POST /`) and live dynamic AJAX updates
+(`POST /api/predict`) aligned with the 9 reduced ML features (7 user inputs +
+2 catalogue-resolved physical specs: segment & engine_cc).
+
 Run:
     python web/app.py                 # http://127.0.0.1:5000
     python web/app.py --port 5001
@@ -47,7 +51,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from carprice.catalogue import CATALOGUE, SEGMENT_LABELS  # noqa: E402
 from carprice.market import load_market  # noqa: E402
-from carprice.valuation import CarQuery, CarValuator, VALUATION_YEAR  # noqa: E402
+from carprice.valuation import (MARKET_FEATURES, CarQuery, CarValuator,  # noqa: E402
+                                VALUATION_YEAR)
 
 MODEL_PATH = ROOT / "models" / "market_model.pkl"
 
@@ -84,6 +89,56 @@ def _suggestions() -> dict[str, list[str]]:
     return {brand: sorted(models) for brand, models in CATALOGUE.items()}
 
 
+def _parse_form_payload(src) -> dict:
+    return {
+        "brand": str(src.get("brand", "") or ""),
+        "model": str(src.get("model", "") or ""),
+        "year": str(src.get("year", str(VALUATION_YEAR - 5)) or str(VALUATION_YEAR - 5)),
+        "kms_driven": str(src.get("kms_driven", "50000") or "50000"),
+        "fuel": str(src.get("fuel", "Petrol") or "Petrol"),
+        "transmission": str(src.get("transmission", "Manual") or "Manual"),
+        "owner": str(src.get("owner", "First Owner") or "First Owner"),
+    }
+
+
+def _evaluate_query(form: dict) -> dict:
+    if VALUATOR is None:
+        raise RuntimeError(LOAD_ERROR or "Model not loaded")
+    try:
+        year = int(str(form["year"]).strip())
+    except ValueError as exc:
+        raise ValueError("Enter a valid numeric year.") from exc
+    try:
+        kms = int(float(str(form["kms_driven"]).strip()))
+    except ValueError as exc:
+        raise ValueError("Enter a valid numeric odometer reading.") from exc
+
+    if not 1990 <= year <= VALUATION_YEAR:
+        raise ValueError(f"Year must be between 1990 and {VALUATION_YEAR}.")
+    if not 0 <= kms <= 600_000:
+        raise ValueError("Kilometres driven must be between 0 and 6,00,000.")
+    if not form["model"].strip():
+        raise ValueError("Enter the model — e.g. Swift, Creta, Syros.")
+
+    query = CarQuery(
+        brand=form["brand"].strip() or None,
+        model=form["model"].strip(),
+        year=year,
+        kms_driven=kms,
+        fuel=form["fuel"],
+        transmission=form["transmission"],
+        owner=form["owner"],
+    )
+    v = VALUATOR.value(query)
+    result = v.to_dict()
+    result["price_text"] = _inr(v.price)
+    result["low_text"] = _inr(v.low)
+    result["high_text"] = _inr(v.high)
+    result["engine_cc"] = int(v.spec.engine_cc) if v.spec is not None else None
+    result["features_count"] = len(MARKET_FEATURES)
+    return result
+
+
 @app.route("/", methods=["GET", "POST"])
 @app.route("/docs", methods=["GET"])
 def index():
@@ -92,44 +147,14 @@ def index():
         return render_template("index.html", load_error=LOAD_ERROR, result=None,
                                form={}, brands=[], this_year=VALUATION_YEAR,
                                names_by_brand={}, segments=SEGMENT_LABELS,
-                               initial_view=initial_view)
+                               meta=META, initial_view=initial_view)
 
-    form = {
-        "brand": request.form.get("brand", ""),
-        "model": request.form.get("model", ""),
-        "year": request.form.get("year", str(VALUATION_YEAR - 5)),
-        "kms_driven": request.form.get("kms_driven", "50000"),
-        "fuel": request.form.get("fuel", "Petrol"),
-        "transmission": request.form.get("transmission", "Manual"),
-        "owner": request.form.get("owner", "First Owner"),
-        "service_history": request.form.get("service_history", "yes"),
-    }
+    form = _parse_form_payload(request.form)
     result, error = None, None
 
     if request.method == "POST":
         try:
-            year = int(str(form["year"]).strip())
-            kms = int(str(form["kms_driven"]).strip())
-            if not 1990 <= year <= VALUATION_YEAR:
-                raise ValueError(f"Year must be between 1990 and {VALUATION_YEAR}.")
-            if not 0 <= kms <= 600_000:
-                raise ValueError("Kilometres driven must be between 0 and 6,00,000.")
-            if not form["model"].strip():
-                raise ValueError("Enter the model — e.g. Swift, Creta, Syros.")
-
-            query = CarQuery(
-                brand=form["brand"].strip() or None,
-                model=form["model"].strip(),
-                year=year, kms_driven=kms,
-                fuel=form["fuel"], transmission=form["transmission"],
-                owner=form["owner"],
-                service_history=(form["service_history"] == "yes"),
-            )
-            v = VALUATOR.value(query)
-            result = v.to_dict()
-            result["price_text"] = _inr(v.price)
-            result["low_text"] = _inr(v.low)
-            result["high_text"] = _inr(v.high)
+            result = _evaluate_query(form)
         except ValueError as exc:
             error = str(exc)
 
@@ -142,14 +167,33 @@ def index():
     )
 
 
+@app.post("/api/predict")
+def api_predict():
+    """Real-time JSON valuation endpoint for dynamic frontend updates."""
+    if LOAD_ERROR:
+        return jsonify({"error": LOAD_ERROR}), 503
+    payload = request.get_json(silent=True) or request.form or {}
+    form = _parse_form_payload(payload)
+    try:
+        result = _evaluate_query(form)
+        return jsonify(result)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
 @app.get("/health")
 def health():
+    tm = META.get("test_metrics", {})
     return jsonify({
         "status": "ok" if VALUATOR else "model_missing",
         "market_model": META.get("market_model"),
+        "features_count": META.get("features_count", len(MARKET_FEATURES)),
+        "features": META.get("features", MARKET_FEATURES),
         "rows": META.get("rows"),
-        "test_r2": META.get("test_metrics", {}).get("test_r2"),
-        "test_mape": META.get("test_metrics", {}).get("test_mape"),
+        "cv_r2": tm.get("cv_r2"),
+        "test_r2": tm.get("test_r2"),
+        "test_mae": tm.get("test_mae"),
+        "test_mape": tm.get("test_mape"),
     })
 
 

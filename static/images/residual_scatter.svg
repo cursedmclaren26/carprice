@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 700 400">
   <rect width="700" height="400" fill="#11161d" rx="12"/>
   <text x="350" y="28" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#f0f6fc" text-anchor="middle">Residual Analysis — Actual vs Predicted</text>
-  <text x="350" y="392" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">HistGradientBoosting · Grouped K-Fold holdout set predictions</text>
+  <text x="350" y="392" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Tuned SVR (RBF, C=10, gamma=auto) · Untouched Test Holdout (n=1,387)</text>
 
   <!-- Axes -->
   <line x1="80" y1="40" x2="80" y2="340" stroke="#30363d" stroke-width="1.5"/>
@@ -17,8 +17,8 @@
 
   <!-- Stat box -->
   <rect x="90" y="50" width="130" height="52" rx="6" fill="#1a2332" stroke="#30363d" stroke-width="1"/>
-  <text x="155" y="70" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#f0f6fc" text-anchor="middle">R² = 0.877</text>
-  <text x="155" y="88" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">MAE = ₹74.5k</text>
+  <text x="155" y="70" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#f0f6fc" text-anchor="middle">R² = 0.911</text>
+  <text x="155" y="88" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">MAE = ₹84.3k</text>
   <text x="155" y="104" font-family="system-ui,sans-serif" font-size="9" fill="#3fb950" text-anchor="middle">Champion Model</text>
 
   <!-- Annotations -->

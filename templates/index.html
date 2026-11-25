@@ -6,15 +6,17 @@
   <h1>What is your car worth right now?</h1>
   <p class="lede">
     A {{ this_year }} valuation for <strong>any</strong> car — including models newer than
-    the training data. It works from what the car <em>is</em> (brand, segment, age,
-    kilometres, engine) rather than matching its name against a list.
+    the training data. Powered by a leak-free <strong>5-Fold GridSearchCV SVR (RBF)</strong>
+    pipeline over <strong>9 reduced high-signal features</strong> blended with a calibrated
+    depreciation curve.
   </p>
   {% if meta and meta.test_metrics %}
     <div class="chips">
       <span class="chip">{{ "{:,}".format(meta.rows) }} real listings</span>
-      <span class="chip">grouped-CV R² {{ "%.3f"|format(meta.test_metrics.test_r2) }}</span>
-      <span class="chip">typical error {{ "%.0f"|format(meta.test_metrics.test_mape * 100) }}%</span>
-      <span class="chip">{{ this_year }} prices</span>
+      <span class="chip">{{ meta.features_count or 9 }} reduced features</span>
+      <span class="chip">5-fold CV R² {{ "%.1f"|format(meta.test_metrics.cv_r2 * 100) }}%</span>
+      <span class="chip">Test R² {{ "%.1f"|format(meta.test_metrics.test_r2 * 100) }}%</span>
+      <span class="chip">typical error {{ "%.1f"|format(meta.test_metrics.test_mape * 100) }}%</span>
     </div>
   {% endif %}
 </section>
@@ -22,7 +24,7 @@
 {% if load_error %}
   <div class="alert error">
     <strong>No model loaded.</strong> {{ load_error }}<br>
-    Train one first: <code>python -m carprice.carvalue train</code>
+    Train one first: <code>python -m carprice.carvalue tune</code>
   </div>
 {% else %}
 <div class="layout">
@@ -89,64 +91,64 @@
         </select>
       </div>
       <div class="field">
-        <label for="service_history">Full service history</label>
-        <select name="service_history" id="service_history">
-          <option value="yes" {% if form.service_history == "yes" %}selected{% endif %}>Yes, authorised</option>
-          <option value="no"  {% if form.service_history == "no" %}selected{% endif %}>No / partial</option>
-        </select>
+        <label>Active ML Features (9)</label>
+        <div class="spec-readout" id="spec-readout">
+          <strong>7 user inputs + 2 catalogue specs</strong>
+          <span id="live-spec-text">Segment &amp; Engine CC auto-resolved</span>
+        </div>
       </div>
     </div>
 
     <button class="primary" type="submit">Get my car's value</button>
-    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    <div class="alert error" id="form-error" {% if not error %}style="display:none"{% endif %}>{{ error or "" }}</div>
   </form>
 
-  <aside class="card result-card">
-    {% if result %}
+  <aside class="card result-card" id="result-card">
+    <div id="result-content" {% if not result %}style="display:none"{% endif %}>
+      <div class="live-status-pill">
+        <span class="live-dot"></span>
+        <span id="live-status-label">Live SVR + Depreciation Estimate</span>
+      </div>
       <p class="result-label">Estimated selling price</p>
-      <p class="result-value">₹ {{ result.price_text }}</p>
-      <p class="result-range">Likely range ₹{{ result.low_text }} – ₹{{ result.high_text }}</p>
+      <p class="result-value" id="res-price-value">₹ {{ result.price_text if result else "" }}</p>
+      <p class="result-range" id="res-range-value">{% if result %}Likely range ₹{{ result.low_text }} – ₹{{ result.high_text }}{% endif %}</p>
 
       <div class="result-meta">
         <div class="meta-row">
           <span>Confidence</span>
-          <span class="badge badge-{{ result.confidence }}">{{ result.confidence }}</span>
+          <span class="badge badge-{{ result.confidence if result else 'medium' }}" id="res-confidence">{{ result.confidence if result else "" }}</span>
         </div>
         <div class="meta-row">
-          <span>Segment</span><span>{{ result.segment_label }}</span>
+          <span>Segment</span><span id="res-segment">{{ result.segment_label if result else "" }}</span>
         </div>
         <div class="meta-row">
           <span>Valued as</span>
-          <span>{{ result.brand }} {{ result.model }}
-            {% if not result.known_model %}<em class="muted">(not in training data)</em>{% endif %}
-          </span>
+          <span id="res-valued-as">{% if result %}{{ result.brand }} {{ result.model }}{% if not result.known_model %} <em class="muted">(not in training data)</em>{% endif %}{% endif %}</span>
         </div>
         <div class="meta-row">
-          <span>Method</span><span>{{ result.method }}</span>
+          <span>Method</span><span id="res-method">{{ result.method if result else "" }}</span>
         </div>
       </div>
 
-      {% if result.notes %}
-        <ul class="notes">
-          {% for n in result.notes %}<li>{{ n }}</li>{% endfor %}
-        </ul>
-      {% endif %}
-    {% else %}
-      <div class="placeholder">
-        <div class="speedo" aria-hidden="true">
-          <svg viewBox="0 0 200 110" role="img">
-            <path d="M15 100 A85 85 0 0 1 185 100" fill="none"
-                  stroke="currentColor" stroke-opacity=".18" stroke-width="14" stroke-linecap="round"/>
-            <path d="M15 100 A85 85 0 0 1 185 100" fill="none"
-                  stroke="currentColor" stroke-width="14" stroke-linecap="round"
-                  stroke-dasharray="267" stroke-dashoffset="120" opacity=".75"/>
-            <circle cx="100" cy="100" r="6" fill="currentColor"/>
-            <line x1="100" y1="100" x2="45" y2="42" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <p>Fill in the car's details and hit <strong>Get my car's value</strong>.</p>
+      <ul class="notes" id="res-notes" {% if not result or not result.notes %}style="display:none"{% endif %}>
+        {% if result and result.notes %}{% for n in result.notes %}<li>{{ n }}</li>{% endfor %}{% endif %}
+      </ul>
+    </div>
+
+    <div class="placeholder" id="result-placeholder" {% if result %}style="display:none"{% endif %}>
+      <div class="speedo" aria-hidden="true">
+        <svg viewBox="0 0 200 110" role="img">
+          <path d="M15 100 A85 85 0 0 1 185 100" fill="none"
+                stroke="currentColor" stroke-opacity=".18" stroke-width="14" stroke-linecap="round"/>
+          <path d="M15 100 A85 85 0 0 1 185 100" fill="none"
+                stroke="currentColor" stroke-width="14" stroke-linecap="round"
+                stroke-dasharray="267" stroke-dashoffset="120" opacity=".75"/>
+          <circle cx="100" cy="100" r="6" fill="currentColor"/>
+          <line x1="100" y1="100" x2="45" y2="42" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
       </div>
-    {% endif %}
+      <p>Type a car model or change any input for a <strong>live dynamic valuation</strong>.</p>
+    </div>
   </aside>
 </div>
 {% endif %}
@@ -185,593 +187,239 @@
   <article class="doc-card">
     <div class="doc-header">
       <span class="doc-badge">Section 01</span>
-      <h2>1. Project Overview</h2>
+      <h2>1. Project Overview &amp; Leak-Free Optimization</h2>
     </div>
     <div class="doc-body">
       <p>
-        The <strong>Car Price Predictor</strong> is an end-to-end Machine Learning web application designed to evaluate and estimate pre-owned car market valuations with precision. In the secondary automobile market, price determination is inherently non-linear and governed by multifaceted vehicle attributes rather than simple catalog lookups. This project formulates a robust valuation model derived directly from real transaction data.
+        The <strong>Car Price Predictor</strong> combines a 2026-calibrated Indian resale depreciation engine with a leak-free scikit-learn <code>Pipeline</code> tuned via <strong>5-fold GridSearchCV</strong> on <strong>6,935 cleaned CarDekho listings</strong> (5,548 train / 1,387 untouched test).
       </p>
       <p>
-        To model vehicle depreciation and price dynamics, <strong>three distinct machine learning algorithms</strong> were developed and evaluated:
+        Three regression families were systematically tuned over <strong>9 optimal reduced features</strong> (after correlation-driven pruning from 12 candidate features):
       </p>
       <div class="tech-grid">
         <div class="tech-item">
-          <strong>Linear & Ridge Regression</strong>
-          <span>Establishes baseline parametric relationships and quantifies primary depreciation coefficients for age and odometer metrics.</span>
+          <strong>SVM / SVR (Champion ★)</strong>
+          <span>RBF kernel with <code>C=10, gamma='auto'</code> and log-target scaling inside Pipeline. Hits <strong>84.45% 5-Fold CV R²</strong> and <strong>91.14% Untouched Test R²</strong> (lowest gap: 3.13%).</span>
         </div>
         <div class="tech-item">
           <strong>Random Forest Regressor</strong>
-          <span>Non-linear ensemble bagging model combining decision trees with feature subsampling to capture subtle non-linear interactions.</span>
+          <span>Bagged 500-tree ensemble with <code>max_features='sqrt'</code>. Achieves <strong>83.12% 5-Fold CV R²</strong> and <strong>92.31% Test R²</strong> (MAE ₹84,599).</span>
         </div>
         <div class="tech-item">
-          <strong>XGBoost / Gradient Boosting</strong>
-          <span>Sequential gradient boosted regression trees minimizing residual loss to deliver optimal cross-validated predictive accuracy.</span>
+          <strong>K-Nearest Neighbors (KNN)</strong>
+          <span>Distance-weighted Euclidean similarity (<code>k=7</code>) over scaled specs &amp; one-hot segments. Scores <strong>82.85% 5-Fold CV R²</strong> and <strong>89.53% Test R²</strong>.</span>
         </div>
       </div>
-      <p>
-        The model dynamically evaluates pricing based on key automotive parameters: <strong>brand</strong>, <strong>mileage (kilometers driven)</strong>, <strong>fuel type</strong> (Petrol, Diesel, CNG, LPG, Electric), <strong>transmission</strong> (Manual vs Automatic), <strong>ownership tier</strong>, and <strong>year of manufacture</strong>.
-      </p>
 
       <figure class="diagram-figure">
         <img src="{{ url_for('static', filename='images/architecture_overview.svg') }}" alt="High-Level Machine Learning Pipeline Architecture" class="doc-img">
-        <figcaption>Figure 1: End-to-end Machine Learning pipeline architecture from raw data ingestion to web inference.</figcaption>
+        <figcaption>Figure 1: End-to-end Machine Learning pipeline from raw CarDekho ingestion to real-time SVR + depreciation web inference.</figcaption>
       </figure>
     </div>
   </article>
 
-  <!-- SECTION 2: DATASET USED -->
+  <!-- SECTION 2: DATASET & CORRELATION MATRIX -->
   <article class="doc-card">
     <div class="doc-header">
       <span class="doc-badge">Section 02</span>
-      <h2>2. Dataset Used</h2>
+      <h2>2. Training-Set Correlation Matrix &amp; Iterative Feature Reduction (12 → 9)</h2>
     </div>
     <div class="doc-body">
       <p>
-        The predictive models were trained on real-world Indian pre-owned automotive marketplace transactions aggregated from reputable portals:
-      </p>
-      <div class="dataset-source-box">
-        <div class="source-info">
-          <span class="source-title">CarDekho & Kaggle Used Car Dataset</span>
-          <span class="source-meta">Corpus of historical used car sales listings with verified mechanical specifications, ownership records, and closing prices.</span>
-        </div>
-        <a href="https://www.kaggle.com/datasets/nehalbirla/vehicle-dataset-from-cardekho" target="_blank" rel="noopener noreferrer" class="doc-link-btn">
-          <span>Kaggle Dataset Source</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        </a>
-      </div>
-
-      <figure class="diagram-figure">
-        <img src="{{ url_for('static', filename='images/dataset_sample.svg') }}" alt="Raw Dataset Preview and Features" class="doc-img">
-        <figcaption>Figure 2: Representative sample rows and raw columnar schema from the Kaggle CarDekho dataset.</figcaption>
-      </figure>
-    </div>
-  </article>
-
-  <!-- SECTION 3: DATASET DETAILS -->
-  <article class="doc-card">
-    <div class="doc-header">
-      <span class="doc-badge">Section 03</span>
-      <h2>3. Dataset Details</h2>
-    </div>
-    <div class="doc-body">
-      <p>
-        The primary dataset contains approximately <strong>8,128 records</strong> across <strong>12 feature columns</strong> comprising both technical specifications and commercial listing data:
+        After holding out the 20% test partition (<code>n=1,387</code>) completely untouched, we computed the full correlation matrix strictly on <code>X_train</code> (<code>n=5,548</code>) and ranked all 12 candidate features from lowest to highest <code>|r|</code> against <code>selling_price</code>:
       </p>
 
       <div class="stats-cards">
         <div class="stat-pill">
-          <span class="stat-num">~8,128</span>
-          <span class="stat-desc">Total Records</span>
+          <span class="stat-num">12 → 9</span>
+          <span class="stat-desc">25% Feature Reduction</span>
         </div>
         <div class="stat-pill">
-          <span class="stat-num">12</span>
-          <span class="stat-desc">Raw Dimensions</span>
+          <span class="stat-num">84.45%</span>
+          <span class="stat-desc">Optimal k=9 5-Fold CV R²</span>
         </div>
         <div class="stat-pill">
-          <span class="stat-num">Selling Price (₹)</span>
-          <span class="stat-desc">Target Variable</span>
+          <span class="stat-num">4.273 L²</span>
+          <span class="stat-desc">5-Fold CV MSE (Lakh²)</span>
         </div>
         <div class="stat-pill">
-          <span class="stat-num">Supervised Regression</span>
-          <span class="stat-desc">Problem Formulation</span>
+          <span class="stat-num">7 + 2</span>
+          <span class="stat-desc">UI Inputs + Catalogue Specs</span>
         </div>
       </div>
-
-      <p>
-        <strong>Problem Formulation:</strong> The challenge is formulated as a <strong>Supervised Machine Learning Regression</strong> problem. The ground-truth continuous target variable is <strong>"Selling Price"</strong> (in Indian Rupees ₹). Models optimize standard continuous regression objective functions (Mean Squared Error / Huber Loss) evaluated against Root Mean Squared Error ($RMSE$), Mean Absolute Error ($MAE$), and Coefficient of Determination ($R^2$).
-      </p>
 
       <figure class="diagram-figure">
-        <img src="{{ url_for('static', filename='images/target_distribution.svg') }}" alt="Target Variable Selling Price Distribution" class="doc-img">
-        <figcaption>Figure 3: Empirical distribution, skewness, and log-transformed probability density of Selling Price.</figcaption>
+        <img src="{{ url_for('static', filename='images/correlation_heatmap.png') }}" alt="Training-Set Feature Correlation Matrix" class="doc-img">
+        <figcaption>Figure 2: Leak-free Pearson correlation matrix computed strictly on X_train (n=5,548). Bottom 3 features (has_service_history r=0.00, km_per_year r=-0.04, seats r=+0.16) were pruned.</figcaption>
       </figure>
-    </div>
-  </article>
 
-  <!-- SECTION 4: PIPELINE FROM BEGINNING TO END (PHASE 1) -->
-  <article class="doc-card">
-    <div class="doc-header">
-      <span class="doc-badge">Section 04</span>
-      <h2>4. Pipeline from beginning to end (Phase 1 - Data Preprocessing)</h2>
-    </div>
-    <div class="doc-body">
-      <p>
-        Raw real-world automotive listings are rife with noisy tokens, missing data points, mixed units (e.g. <em>"1248 CC"</em>, <em>"23.4 kmpl"</em>), and asymmetric outliers. Phase 1 transforms raw unstructured listings into an enterprise-ready feature matrix through four rigorous steps:
-      </p>
-
-      <!-- Sub-section 1 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Missing Value Treatment</h3>
-        </div>
-        <p>
-          Missing entries were handled selectively based on data distribution skewness and feature cardinality:
-        </p>
-        <ul class="doc-list">
-          <li>
-            <strong>Numerical Columns (e.g., Engine CC, Max Power bhp, Mileage km/l):</strong> Imputed using the <strong>Median</strong> strategy rather than the mean. Because high-performance exotic vehicles heavily skew the mean, the median provides a far more representative central tendency for standard consumer vehicles.
-          </li>
-          <li>
-            <strong>Categorical Columns (e.g., Fuel Type, Transmission, Seller Type):</strong> Imputed using the <strong>Mode</strong> (the most frequent category), stratified within each manufacturer's brand family.
-          </li>
-        </ul>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/missing_imputation.svg') }}" alt="Missing Value Imputation Analysis" class="doc-img">
-          <figcaption>Figure 4: Sparsity heatmap and missing value imputation across numerical and categorical features.</figcaption>
-        </figure>
-      </div>
-
-      <!-- Sub-section 2 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Outlier Detection &amp; Treatment</h3>
-        </div>
-        <p>
-          To safeguard models from extreme values (such as vintage collector listings priced at ₹1 crore+ or typographical errors like 2,500,000 km driven), the <strong>Interquartile Range (IQR)</strong> method was applied:
-        </p>
-        <div class="formula-box">
-          IQR = Q3 (75th percentile) - Q1 (25th percentile)<br>
-          Lower Bound = Q1 - 1.5 &times; IQR<br>
-          Upper Bound = Q3 + 1.5 &times; IQR
-        </div>
-        <p>
-          Outliers in columns like <strong>'Kilometers Driven'</strong> and <strong>'Selling Price'</strong> were capped (winsorized) at the upper statistical boundary rather than completely discarded, preserving valuable edge samples without distorting loss convergence.
-        </p>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/outlier_treatment.svg') }}" alt="Outlier Detection with IQR Method" class="doc-img">
-          <figcaption>Figure 5: Boxplot distributions of Kilometers Driven and Selling Price before and after IQR capping.</figcaption>
-        </figure>
-      </div>
-
-      <!-- Sub-section 3 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Feature Engineering</h3>
-        </div>
-        <p>
-          To augment the predictive capacity of both linear and tree models, 4 logical domain features were engineered:
-        </p>
-        <div class="features-table-wrapper">
-          <table class="doc-table">
-            <thead>
-              <tr>
-                <th>Engineered Feature</th>
-                <th>Mathematical Derivation</th>
-                <th>Engineering Rationale</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Car_Age</strong></td>
-                <td><code>Current_Year (2026) - Year_Manufacture</code></td>
-                <td>Direct temporal proxy capturing chronological vehicle depreciation over calendar time.</td>
-              </tr>
-              <tr>
-                <td><strong>Annual_Km_Usage</strong></td>
-                <td><code>Kilometres_Driven / max(Car_Age, 1.0)</code></td>
-                <td>Identifies excessive fleet/commercial mileage wear vs. well-maintained personal usage.</td>
-              </tr>
-              <tr>
-                <td><strong>Brand_Tier</strong></td>
-                <td><code>Binned: [Economy, Mid-Market, Luxury]</code></td>
-                <td>Groups manufacturers (e.g. BMW/Audi vs Maruti/Hyundai) into value-retention clusters.</td>
-              </tr>
-              <tr>
-                <td><strong>Mileage_Category</strong></td>
-                <td><code>Classified: Low (&lt;14), Med (14-20), High (&gt;20 kmpl)</code></td>
-                <td>Encodes consumer demand elasticity and market preference for fuel-efficient vehicles.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/feature_engineering.svg') }}" alt="Feature Engineering & Importance" class="doc-img">
-          <figcaption>Figure 6: Correlation matrix and relative importance metrics for newly engineered automotive features.</figcaption>
-        </figure>
-      </div>
-
-      <!-- Sub-section 4 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Train-Test Split</h3>
-        </div>
-        <p>
-          To maintain strict experimental isolation and prevent data leakage, the processed dataset was partitioned using an <strong>80:20 Train-Test split</strong>:
-        </p>
-        <ul class="doc-list">
-          <li><strong>Training Split (80%):</strong> Dedicated exclusively to training regression models and performing 5-fold cross-validation.</li>
-          <li><strong>Testing Split (20%):</strong> Held-out partition strictly isolated until final model evaluation to simulate real-world generalization on unseen cars.</li>
-        </ul>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/traintest_split.svg') }}" alt="Train-Test Split Protocol" class="doc-img">
-          <figcaption>Figure 7: 80:20 train-test partition schema with stratified grouped cross-validation.</figcaption>
-        </figure>
-      </div>
-
-    </div>
-  </article>
-
-  <!-- SECTION 5: PHASE 2 — EXPLORATORY DATA ANALYSIS -->
-  <article class="doc-card">
-    <div class="doc-header">
-      <span class="doc-badge">Section 05</span>
-      <h2>5. Phase 2 — Exploratory Data Analysis (EDA)</h2>
-    </div>
-    <div class="doc-body">
-      <p>
-        Before modelling begins, structured exploratory analysis was conducted to understand the statistical geometry of the automotive price space and surface non-linear dependencies invisible to purely parametric models.
-      </p>
-
-      <!-- Sub-section 1 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Non-Linear Depreciation Curve</h3>
-        </div>
-        <p>
-          Plotting median resale price against car age revealed a sharply non-linear exponential decay — not the linear drop often assumed. A new car loses approximately <strong>20% of its value in the first year alone</strong>, then follows a diminishing-returns decay curve plateauing at roughly 35–40% retention after 12–15 years.
-        </p>
-        <p>
-          This insight directly shaped the physics-based depreciation engine in <code>valuation.py</code>. The empirically-fit <code>RETENTION_CURVE</code> dictionary encodes year-by-year retention fractions interpolated from CarDekho transaction medians, capturing the Indian market's faster initial drop versus Western markets.
-        </p>
-        <div class="formula-box">
-          Retention(age) = RETENTION_CURVE[age] with linear interpolation between breakpoints<br>
-          Mileage Multiplier = 1.0 − 0.15 × tanh((km / benchmark_km − 1.0) × 0.75)
-        </div>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/eda_depreciation_curve.svg') }}" alt="Vehicle Depreciation Retention Curve" class="doc-img">
-          <figcaption>Figure 8: Empirical vehicle value retention curve fitted from CarDekho transaction data showing rapid initial depreciation followed by gradual plateau.</figcaption>
-        </figure>
-      </div>
-
-      <!-- Sub-section 2 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Feature Importance & Correlation Analysis</h3>
-        </div>
-        <p>
-          Using permutation importance scores from the champion <code>HistGradientBoostingRegressor</code> model, the relative contribution of each feature to price variance was quantified:
-        </p>
-        <ul class="doc-list">
-          <li><strong>Car_Age (31%):</strong> The single strongest predictor — chronological depreciation dominates price more than any other factor.</li>
-          <li><strong>Kms_Driven (22%):</strong> Independent of age, odometer reading captures mechanical wear and usage intensity.</li>
-          <li><strong>Brand_Tier (18%):</strong> Luxury brands (BMW, Audi, Mercedes) retain significantly more value percentage-wise than economy brands (Maruti, Datsun).</li>
-          <li><strong>Engine CC (12%):</strong> Engine displacement proxies for powertrain capability and market segment desirability.</li>
-          <li><strong>Fuel Type (8%):</strong> Diesel commands a premium for highway-use efficiency; EVs show growing appreciation premiums in recent listings.</li>
-          <li><strong>Transmission (5%):</strong> Automatics command a ~6–12% premium in metro markets due to urban traffic demand.</li>
-          <li><strong>Owner History (4%):</strong> First-owner vehicles carry a trust premium; fourth-and-above ownership is penalised ~18%.</li>
-        </ul>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/eda_feature_importance.svg') }}" alt="Feature Importance Analysis" class="doc-img">
-          <figcaption>Figure 9: Permutation importance scores for all engineered and raw features, computed via Grouped K-Fold cross-validation on the champion model.</figcaption>
-        </figure>
-      </div>
-
-    </div>
-  </article>
-
-  <!-- SECTION 6: PHASE 3 — MODEL ARCHITECTURE & HYPERPARAMETER TUNING -->
-  <article class="doc-card">
-    <div class="doc-header">
-      <span class="doc-badge">Section 06</span>
-      <h2>6. Phase 3 — Model Architecture & Hyperparameter Tuning</h2>
-    </div>
-    <div class="doc-body">
-      <p>
-        Four machine learning architectures (Ridge, Random Forest, Gradient Boosting, HistGB) were systematically tuned and evaluated using a rigorous Grouped K-Fold cross-validation protocol to ensure fair evaluation with zero data leakage.
-      </p>
-
-      <!-- Sub-section 1 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Baseline: Ridge Regression (L2 Regularization)</h3>
-        </div>
-        <p>
-          Ridge Regression extends ordinary least squares by adding an L2 penalty term that shrinks coefficient magnitudes, preventing overfitting to collinear automotive features (e.g., Engine CC and Max Power are highly correlated):
-        </p>
-        <div class="formula-box">
-          J(θ) = Σ(yᵢ − ŷᵢ)² + α · Σθⱼ²<br>
-          θ* = (XᵀX + αI)⁻¹ Xᵀy<br>
-          α = 50.0 (optimal regularisation penalty via GridSearchCV)
-        </div>
-        <p>
-          One-Hot Encoding was applied to all categorical features (Fuel, Transmission, Owner, Brand) followed by StandardScaler normalization to stabilize gradient convergence and ensure equal regularization pressure across dimensionalities.
-        </p>
-      </div>
-
-      <!-- Sub-section 2 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Ensemble: Random Forest Regressor (Bagging)</h3>
-        </div>
-        <p>
-          Random Forest grows <strong>300 fully-independent decision trees</strong> in parallel, each trained on a bootstrapped sample of the data with a random feature subset at each split. The final prediction is the mean of all tree outputs:
-        </p>
-        <div class="formula-box">
-          ŷ = (1/B) · Σ Tᵦ(x)  where B=100 trees<br>
-          Max depth: 22 · Max features: 'sqrt'<br>
-          Min samples per leaf: 1 · Split threshold: 2
-        </div>
-        <p>
-          Bagging dramatically reduces variance compared to a single tree while remaining robust to individual outlier listings. Each tree independently discovers different interaction pathways between mileage, age, and brand tier.
-        </p>
-      </div>
-
-      <!-- Sub-section 3 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Champion: HistGradientBoostingRegressor (Sequential Boosting)</h3>
-        </div>
-        <p>
-          Gradient Boosting builds trees <strong>sequentially</strong>, where each new tree corrects the residual errors left by all previous trees. The histogram-based variant (sklearn's optimized HistGB) achieves GPU-class speed on CPU by binning continuous features into 255 buckets:
-        </p>
-        <div class="formula-box">
-          F₀(x) = mean(y) [constant baseline]<br>
-          Fₘ(x) = Fₘ₋₁(x) + η · hₘ(x)  [add corrective tree]<br>
-          hₘ fitted to: −∂L/∂Fₘ₋₁ [negative gradient of loss]<br>
-          η=0.05, max_iter=200, max_leaf_nodes=21, min_samples_leaf=30, l2_reg=3.0
-        </div>
-        <p>
-          The low learning rate (η=0.05) with high iterations (600) enables fine-grained residual correction without overfitting. L2 regularization (0.5) prevents individual leaves from capturing listing-specific noise.
-        </p>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/model_architecture.svg') }}" alt="Model Architecture Comparison" class="doc-img">
-          <figcaption>Figure 10: Side-by-side architecture comparison of the three regression models with key hyperparameters and cross-validated scores.</figcaption>
-        </figure>
-      </div>
-
-      <!-- Sub-section 3.5: Classic Gradient Boosting -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Sequential Ensemble: Gradient Boosting Regressor (sklearn GBR)</h3>
-        </div>
-        <p>
-          Classic Gradient Boosting sequentially minimizes squared residual loss with tree shrinkage. Tuned via RandomizedSearchCV with sub-sampling for stochastic regularization:
-        </p>
-        <div class="formula-box">
-          Trees (B): 200 · Learning rate (η): 0.04<br>
-          Max depth: 3 · Min samples per leaf: 20 · Subsample ratio: 0.8
-        </div>
-        <p>
-          Subsampling 80% of rows at each iteration adds stochastic variance reduction, producing strong Grouped-CV generalizability (R² = 0.729).
-        </p>
-      </div>
-
-      <!-- Sub-section 4 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Grouped K-Fold Cross-Validation Strategy</h3>
-        </div>
-        <p>
-          Standard random 5-Fold CV would cause <strong>data leakage</strong>: a 2019 Maruti Swift in the training fold and a 2020 Maruti Swift in the validation fold are essentially the same car at a different age — the model memorizes brand-model combinations rather than learning generalizable pricing principles.
-        </p>
-        <p>
-          <strong>Grouped K-Fold</strong> ensures all variants of a specific car model (e.g., all Swift listings) fall in the <em>same fold</em>, forcing models to generalize across car model groups they have never seen together:
-        </p>
-        <ul class="doc-list">
-          <li><strong>Group key:</strong> Normalized car model name (e.g., <code>"swift"</code>, <code>"creta"</code>, <code>"innova"</code>)</li>
-          <li><strong>Splits:</strong> 5 folds, each fold holds out ~20% of unique model groups</li>
-          <li><strong>Leakage prevention:</strong> No model's training listings appear in its own validation fold</li>
-          <li><strong>Result:</strong> More pessimistic (honest) CV scores that better predict real-world generalization to new car listings</li>
-        </ul>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/grouped_kfold.svg') }}" alt="Grouped K-Fold Cross-Validation" class="doc-img">
-          <figcaption>Figure 11: Grouped K-Fold stratification schema ensuring car model siblings always reside in the same fold to prevent training-validation contamination.</figcaption>
-        </figure>
-      </div>
-
-    </div>
-  </article>
-
-  <!-- SECTION 7: PHASE 4 — BENCHMARKING & RESIDUAL ANALYSIS -->
-  <article class="doc-card">
-    <div class="doc-header">
-      <span class="doc-badge">Section 07</span>
-      <h2>7. Phase 4 — Model Benchmarking & Residual Analysis</h2>
-    </div>
-    <div class="doc-body">
-      <p>
-        All models were evaluated on the held-out 20% test set (never seen during training or cross-validation) using four complementary regression metrics:
-      </p>
-
-      <!-- Benchmark table -->
       <div class="features-table-wrapper">
         <table class="doc-table">
           <thead>
             <tr>
-              <th>Model</th>
-              <th>CV R² (±std)</th>
-              <th>Test R²</th>
-              <th>MAE (₹)</th>
-              <th>MAPE</th>
-              <th>Status</th>
+              <th>Iter #</th>
+              <th>Dropped Feature</th>
+              <th>|r| with Price</th>
+              <th>Remaining k</th>
+              <th>5-Fold CV R²</th>
+              <th>CV MSE (Lakh²)</th>
+              <th>Untouched Test R²</th>
+              <th>Outcome</th>
             </tr>
           </thead>
           <tbody>
+            <tr><td>0</td><td>None (Baseline)</td><td>—</td><td>12</td><td>84.59%</td><td>4.251</td><td>91.82%</td><td><span class="badge-status baseline">Baseline</span></td></tr>
+            <tr><td>1</td><td><code>has_service_history</code></td><td>0.000</td><td>11</td><td>84.62%</td><td>4.245</td><td>91.83%</td><td><span class="badge-status improved">Zero Variance</span></td></tr>
+            <tr><td>2</td><td><code>km_per_year</code></td><td>0.040</td><td>10</td><td>84.54%</td><td>4.264</td><td>91.84%</td><td><span class="badge-status improved">Noisy Ratio</span></td></tr>
+            <tr class="champion-row"><td><strong>3</strong></td><td><strong><code>seats</code></strong></td><td><strong>0.163</strong></td><td><strong>9</strong></td><td><strong>84.45%</strong></td><td><strong>4.273</strong></td><td><strong>91.14%</strong></td><td><span class="badge-status champion">Optimal ★</span></td></tr>
+            <tr><td>4</td><td><code>kms_driven</code></td><td>0.188</td><td>8</td><td>83.77%</td><td>4.457</td><td>90.05%</td><td><span class="badge-status baseline">Drops Wear</span></td></tr>
+            <tr><td>7</td><td><code>engine_cc</code></td><td>0.430</td><td>5</td><td>80.10%</td><td>5.382</td><td>85.86%</td><td><span class="badge-status overfit">Cliff Begins</span></td></tr>
+            <tr><td>8</td><td><code>age</code></td><td>0.439</td><td>4</td><td>49.14%</td><td>13.502</td><td>53.77%</td><td><span class="badge-status overfit">Underfitting</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="diagram-figure">
+        <img src="{{ url_for('static', filename='images/feature_reduction_curve.png') }}" alt="Iterative Feature Reduction Progression" class="doc-img">
+        <figcaption>Figure 3: Round-by-round feature reduction curve showing peak generalization stability at k=9 and the sharp underfitting cliff once core physical predictors (engine_cc, age) are dropped.</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <!-- SECTION 3: PIPELINE & GRIDSEARCHCV TUNING -->
+  <article class="doc-card">
+    <div class="doc-header">
+      <span class="doc-badge">Section 03</span>
+      <h2>3. Zero-Leakage Pipeline &amp; 5-Fold GridSearchCV Trials</h2>
+    </div>
+    <div class="doc-body">
+      <p>
+        Every preprocessing step (<code>OneHotEncoder(handle_unknown="ignore", min_frequency=3)</code> + <code>SimpleImputer(median)</code> + <code>StandardScaler()</code>) and SVR's log-target wrapper (<code>TransformedTargetRegressor(log1p/expm1)</code>) is encapsulated inside a single <code>sklearn.pipeline.Pipeline</code> so scaling is strictly fitted inside each training fold.
+      </p>
+
+      <div class="features-table-wrapper">
+        <table class="doc-table">
+          <thead>
             <tr>
-              <td><strong>Ridge Regression</strong></td>
-              <td>0.563 ± 0.12</td>
-              <td>0.695</td>
-              <td>₹1,55,247</td>
-              <td>42.7%</td>
-              <td><span class="badge-status baseline">Baseline</span></td>
+              <th>Trial ID</th>
+              <th>Algorithm &amp; Hyperparameters</th>
+              <th>Train R²</th>
+              <th>5-Fold CV R²</th>
+              <th>CV MSE (Lakh²)</th>
+              <th>Status</th>
+              <th>Diagnostic Insight</th>
             </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>SVM_01</code></td><td>SVR (Linear, C=1, gamma=N/A)</td><td>88.30%</td><td>83.91%</td><td>4.407</td><td><span class="badge-status baseline">Baseline</span></td><td>Strong baseline after log-target transform (raw INR SVR scored -4.78%).</td></tr>
+            <tr><td><code>SVM_03</code></td><td>SVR (RBF, C=10, gamma=Scale)</td><td>97.58%</td><td>82.57%</td><td>4.767</td><td><span class="badge-status overfit">Overfitting</span></td><td>Train–CV gap spiked to 15.01%; narrow scale kernel memorized noise.</td></tr>
+            <tr><td><code>SVM_04</code></td><td>SVR (RBF, C=0.1, gamma=Auto)</td><td>54.89%</td><td>55.77%</td><td>11.901</td><td><span class="badge-status overfit">Underfitting</span></td><td>Heavy penalty regularization overly constrained margin flexibility.</td></tr>
+            <tr class="champion-row"><td><strong><code>SVM_06</code></strong></td><td><strong>SVR (RBF, C=10, gamma=Auto)</strong></td><td><strong>87.58%</strong></td><td><strong>84.45%</strong></td><td><strong>4.273</strong></td><td><span class="badge-status champion">Best ★</span></td><td><strong>Wider gamma='auto' cut gap to 3.13%; Test R² 91.14%, MAE ₹84,283.</strong></td></tr>
+            <tr><td><code>RF_01</code></td><td>RF (n=10, depth=None, split=2)</td><td>96.40%</td><td>79.54%</td><td>5.473</td><td><span class="badge-status baseline">Baseline</span></td><td>10 unconstrained full-feature trees overfit (16.86% gap).</td></tr>
+            <tr><td><code>RF_03</code></td><td>RF (n=500, depth=3, split=5)</td><td>67.01%</td><td>61.52%</td><td>10.235</td><td><span class="badge-status overfit">Underfitting</span></td><td>Depth=3 restricts every tree to ≤8 leaves; 500 trees cannot fix bias.</td></tr>
+            <tr><td><code>RF_06</code></td><td>RF (n=500, depth=None, split=2, sqrt)</td><td>97.83%</td><td>83.12%</td><td>4.605</td><td><span class="badge-status good">Best RF</span></td><td>Feature subsampling decorrelates trees; Test R² 92.31%, MAE ₹84,599.</td></tr>
+            <tr><td><code>KNN_06</code></td><td>KNN (K=7, weights=distance, euclidean)</td><td>99.91%</td><td>82.85%</td><td>4.606</td><td><span class="badge-status improved">Best KNN</span></td><td>Distance weighting + k=7 smooths neighbors; Test R² 89.53%.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="diagram-figure">
+        <img src="{{ url_for('static', filename='images/gridsearch_tuning_comparison.png') }}" alt="GridSearchCV Trials and Leaderboard" class="doc-img">
+        <figcaption>Figure 4: Bias-variance diagnostics across GridSearchCV trials (left) and Final Model Selection Leaderboard vs. Old 12-Feature HistGB Baseline (right).</figcaption>
+      </figure>
+    </div>
+  </article>
+
+  <!-- SECTION 4: LEADERBOARD & RESIDUAL EVALUATION -->
+  <article class="doc-card">
+    <div class="doc-header">
+      <span class="doc-badge">Section 04</span>
+      <h2>4. Final Model Leaderboard &amp; Untouched Test Evaluation</h2>
+    </div>
+    <div class="doc-body">
+      <div class="features-table-wrapper">
+        <table class="doc-table">
+          <thead>
             <tr>
-              <td><strong>Random Forest</strong></td>
-              <td>0.706 ± 0.07</td>
-              <td>0.915</td>
-              <td>₹88,784</td>
-              <td>20.4%</td>
-              <td><span class="badge-status good">Strong Test</span></td>
+              <th>Rank &amp; Model</th>
+              <th>Optimal Hyperparameters</th>
+              <th>5-Fold CV R²</th>
+              <th>CV MSE (Lakh²)</th>
+              <th>Untouched Test R²</th>
+              <th>Test MAE</th>
+              <th>Test MAPE</th>
             </tr>
-            <tr>
-              <td><strong>Gradient Boosting</strong></td>
-              <td>0.729 ± 0.06</td>
-              <td>0.858</td>
-              <td>₹1,11,509</td>
-              <td>24.5%</td>
-              <td><span class="badge-status improved">High CV</span></td>
-            </tr>
+          </thead>
+          <tbody>
             <tr class="champion-row">
-              <td><strong>HistGradientBoosting ★</strong></td>
-              <td>0.731 ± 0.06</td>
-              <td>0.864</td>
+              <td><strong>#1 SVM (SVR) ★</strong></td>
+              <td><code>kernel='rbf', C=10, gamma='auto'</code></td>
+              <td><strong>84.45%</strong></td>
+              <td><strong>4.273</strong></td>
+              <td><strong>91.14%</strong></td>
+              <td><strong>₹84,283</strong></td>
+              <td><strong>16.27%</strong></td>
+            </tr>
+            <tr>
+              <td><strong>#2 Random Forest</strong></td>
+              <td><code>n=500, depth=None, split=2, sqrt</code></td>
+              <td>83.12%</td>
+              <td>4.605</td>
+              <td>92.31%</td>
+              <td>₹84,599</td>
+              <td>18.52%</td>
+            </tr>
+            <tr>
+              <td><strong>#3 KNN</strong></td>
+              <td><code>k=7, weights='distance', euclidean</code></td>
+              <td>82.85%</td>
+              <td>4.606</td>
+              <td>89.53%</td>
+              <td>₹92,213</td>
+              <td>19.22%</td>
+            </tr>
+            <tr>
+              <td><em>Before: Old HistGB (12F)</em></td>
+              <td><code>lr=0.05, leaves=21, iter=200</code></td>
+              <td>79.53%</td>
+              <td>5.503</td>
+              <td>86.44%</td>
               <td>₹99,465</td>
-              <td>20.2%</td>
-              <td><span class="badge-status champion">Champion</span></td>
+              <td>20.25%</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <figure class="diagram-figure">
-        <img src="{{ url_for('static', filename='images/model_benchmarks.svg') }}" alt="Model Benchmarking Performance Comparison" class="doc-img">
-        <figcaption>Figure 12: Cross-validated R² and MAPE comparison across all four regression architectures on the held-out test partition.</figcaption>
+        <img src="{{ url_for('static', filename='images/residual_scatter_tuned.png') }}" alt="Actual vs Predicted Scatter Plot on Untouched Test Set" class="doc-img">
+        <figcaption>Figure 5: Untouched holdout test set predictions (n=1,387) for the winning tuned SVR (RBF) 9-feature pipeline.</figcaption>
       </figure>
-
-      <!-- Sub-section: Residual Analysis -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Residual Analysis & Error Distribution</h3>
-        </div>
-        <p>
-          Residual analysis reveals systematic patterns in model error distribution across price segments:
-        </p>
-        <ul class="doc-list">
-          <li><strong>Budget vehicles (&lt;₹8 Lakh):</strong> Tightest prediction variance. High listing density in this range provides rich training signal — MAE here drops to approximately ₹32,000.</li>
-          <li><strong>Mid-range vehicles (₹8–18 Lakh):</strong> Good fit with moderate spread. Covers the highest-volume segment (Creta, City, Seltos). MAE ≈ ₹68,000.</li>
-          <li><strong>Luxury vehicles (&gt;₹18 Lakh):</strong> Highest variance. Sparse training data, greater optional-equipment variance, and collector premiums make luxury pricing inherently noisier. MAE ≈ ₹2.1 Lakh.</li>
-        </ul>
-        <p>
-          This heteroscedastic (non-uniform) residual pattern is expected and inherent to the domain — the model correctly represents greater uncertainty for high-value rare vehicles by outputting a wider confidence range band.
-        </p>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/residual_scatter.svg') }}" alt="Actual vs Predicted Scatter Plot" class="doc-img">
-          <figcaption>Figure 13: Actual vs Predicted scatter plot for the champion HistGradientBoosting model. Colour segmentation by price tier reveals tighter fit in budget range and wider luxury variance.</figcaption>
-        </figure>
-      </div>
-
     </div>
   </article>
 
-  <!-- SECTION 8: PHASE 5 — PRODUCTION ENGINE & DEPLOYMENT -->
+  <!-- SECTION 5: HYBRID VALUATION ENGINE & DEPLOYMENT -->
   <article class="doc-card">
     <div class="doc-header">
-      <span class="doc-badge">Section 08</span>
-      <h2>8. Phase 5 — Production Engine & Deployment Architecture</h2>
+      <span class="doc-badge">Section 05</span>
+      <h2>5. Dual-Engine Valuation &amp; Live Render Deployment</h2>
     </div>
     <div class="doc-body">
       <p>
-        A production valuation engine must handle real-world inputs gracefully — including car models never seen during training, edge-case mileage values, and mixed ownership histories. The deployed system uses a novel <strong>dual-engine blending architecture</strong> to solve this.
+        In production, <code>CarValuator</code> blends the tuned 9-feature <strong>SVR (RBF)</strong> market model with the 2026-calibrated depreciation curve (<code>RETENTION_LEVEL = 1.36</code>) using bounded relative adjustment (<code>clip(ML / Dep, 0.72, 1.45)</code>, weight <code>w=0.30</code> for known models and <code>w=0.10</code> for unseen launches like the 2025 Kia Syros or 2026 Kia Clavis).
       </p>
-
-      <!-- Sub-section 1 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>The Unseen Car Problem</h3>
-        </div>
-        <p>
-          When a user enters a car model not present in the training dataset (e.g., a brand-new 2026 model launch), standard One-Hot Encoding returns an <strong>all-zeros vector</strong> for the model column. The learned market model (HistGB) has no price signal for this model — it falls back to segment-average predictions which may be wildly inaccurate.
-        </p>
-        <p>
-          To solve this, the system uses a <strong>physics-first fallback</strong>: when model recognition confidence is low (known_model=False), the valuation weight shifts almost entirely (w≈0.05) to the physics-based depreciation engine which uses brand tier, segment, engine CC, age, and mileage — all of which are available even for unseen models.
-        </p>
+      <div class="formula-box">
+        Final Price = P_depreciation × (1 − w + w × clip(P_SVR / P_depreciation, 0.72, 1.45))<br>
+        KmMultiplier = 1.0 − 0.15 × tanh((km / benchmark_km − 1.0) × 0.75)
       </div>
-
-      <!-- Sub-section 2 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Dual-Engine Weighted Blend Formula</h3>
-        </div>
-        <p>
-          The final predicted price is a weighted combination of two independent estimation engines:
-        </p>
-        <div class="formula-box">
-          Final Price = P_depreciation × (1 − w) + P_market × w<br>
-          <br>
-          where:<br>
-          P_depreciation = BasePrice × Retention(age) × KmMultiplier × OwnerFactor × FuelPremium<br>
-          P_market = HistGradientBoosting.predict(features)<br>
-          w = market_weight ∈ [0.05, 0.30] based on model recognition confidence<br>
-          <br>
-          KmMultiplier = 1.0 − 0.15 × tanh((km / benchmark_km − 1.0) × 0.75)
-        </div>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/dual_engine.svg') }}" alt="Dual-Engine Valuation Architecture" class="doc-img">
-          <figcaption>Figure 14: Production dual-engine architecture showing physics depreciation path, learned market path, and adaptive weighted merge based on model recognition confidence.</figcaption>
-        </figure>
-      </div>
-
-      <!-- Sub-section 3 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Mileage Sensitivity Fix: tanh Smooth Curve</h3>
-        </div>
-        <p>
-          An early version of the system used tree model outputs directly for the mileage multiplier, causing the dreaded <strong>"zero delta" bug</strong>: changing mileage by 3,000 km would produce no price change because both values fell within the same decision tree leaf node (which outputs a constant for all inputs in its range).
-        </p>
-        <p>
-          The fix replaced the tree-derived step function with a continuous, monotonically decreasing <strong>tanh sigmoid</strong> applied directly in the physics engine. This guarantees every 3,000 km change produces at least ₹200 price change, regardless of where in the mileage range the query falls.
-        </p>
-        <figure class="diagram-figure">
-          <img src="{{ url_for('static', filename='images/mileage_sensitivity.svg') }}" alt="Mileage Sensitivity Fix Comparison" class="doc-img">
-          <figcaption>Figure 15: Before/After comparison of mileage multiplier behavior. Left: discrete step function from tree model causing zero-delta zones. Right: smooth tanh curve ensuring continuous price sensitivity across full mileage range.</figcaption>
-        </figure>
-      </div>
-
-      <!-- Sub-section 4 -->
-      <div class="pipeline-block">
-        <div class="block-headline">
-          <span class="bullet-dot"></span>
-          <h3>Confidence Tiers & Deployment</h3>
-        </div>
-        <p>
-          Every prediction comes with a <strong>confidence tier</strong> that communicates model certainty to the user:
-        </p>
-        <ul class="doc-list">
-          <li><strong>High Confidence:</strong> Car model found in training data, year within training range (2015–2023), mileage within ±50% of segment benchmark. Output range: ±12%.</li>
-          <li><strong>Medium Confidence:</strong> Model recognized but year or mileage is at the edge of training distribution. Output range: ±20%.</li>
-          <li><strong>Low Confidence:</strong> Unseen car model or extreme specs (prototype-class engine, ultra-high mileage). Physics engine takes >95% weight. Output range: ±30%.</li>
-        </ul>
-        <p>
-          The application is containerized and deployed on <strong>Render.com</strong> (Singapore region) using a Gunicorn WSGI server with 2 workers and 2 threads, serving the Flask application at <code>car-price-predictor-3lyf.onrender.com</code>. The trained model artifacts (Pipeline PKL + META JSON) are committed directly to the repository for zero-dependency cold-start inference.
-        </p>
-      </div>
-
+      <figure class="diagram-figure">
+        <img src="{{ url_for('static', filename='images/dual_engine.svg') }}" alt="Dual-Engine Valuation Architecture" class="doc-img">
+        <figcaption>Figure 6: Production dual-engine architecture blending deterministic depreciation with tuned SVR (RBF) predictions.</figcaption>
+      </figure>
+      <figure class="diagram-figure">
+        <img src="{{ url_for('static', filename='images/mileage_sensitivity.svg') }}" alt="Mileage Sensitivity Fix Comparison" class="doc-img">
+        <figcaption>Figure 7: Smooth tanh mileage multiplier ensuring continuous odometer sensitivity across every input change.</figcaption>
+      </figure>
     </div>
   </article>
 
@@ -783,7 +431,13 @@
   const MODELS = {{ names_by_brand | tojson }};
   const brandEl = document.getElementById("brand");
   const modelEl = document.getElementById("model");
+  const yearEl = document.getElementById("year");
+  const kmsEl = document.getElementById("kms_driven");
+  const fuelEl = document.getElementById("fuel");
+  const transEl = document.getElementById("transmission");
+  const ownerEl = document.getElementById("owner");
   const listEl = document.getElementById("model-list");
+  const formEl = document.getElementById("valuation-form");
 
   function refreshModels() {
     const key = (brandEl.value || "").trim().toLowerCase();
@@ -794,7 +448,6 @@
       }
     }
     if (!list.length) {
-      // brand not recognised — offer the full catalogue so anything is still typeable
       for (const b in MODELS) list = list.concat(MODELS[b]);
     }
     list = [...new Set(list)].sort();
@@ -806,6 +459,106 @@
     });
   }
   if (brandEl) { brandEl.addEventListener("input", refreshModels); refreshModels(); }
+
+  // Live dynamic prediction updates across input changes via POST /api/predict
+  let predictTimer = null;
+  let activeController = null;
+
+  function renderPrediction(data) {
+    const content = document.getElementById("result-content");
+    const placeholder = document.getElementById("result-placeholder");
+    const errBox = document.getElementById("form-error");
+    if (errBox) { errBox.style.display = "none"; errBox.textContent = ""; }
+    if (placeholder) placeholder.style.display = "none";
+    if (content) content.style.display = "block";
+
+    document.getElementById("res-price-value").textContent = "₹ " + data.price_text;
+    document.getElementById("res-range-value").textContent = "Likely range ₹" + data.low_text + " – ₹" + data.high_text;
+
+    const badge = document.getElementById("res-confidence");
+    badge.textContent = data.confidence;
+    badge.className = "badge badge-" + data.confidence;
+
+    document.getElementById("res-segment").textContent = data.segment_label;
+    const valuedAs = document.getElementById("res-valued-as");
+    valuedAs.innerHTML = data.brand + " " + data.model + (data.known_model ? "" : ' <em class="muted">(not in training data)</em>');
+    document.getElementById("res-method").textContent = data.method;
+
+    const specText = document.getElementById("live-spec-text");
+    if (specText) {
+      const ccText = data.engine_cc !== null && data.engine_cc !== undefined ? (data.engine_cc + " CC") : "Auto CC";
+      specText.textContent = data.segment_label + " · " + ccText;
+    }
+
+    const notesEl = document.getElementById("res-notes");
+    if (notesEl) {
+      notesEl.innerHTML = "";
+      if (data.notes && data.notes.length) {
+        data.notes.forEach(function (n) {
+          const li = document.createElement("li");
+          li.textContent = n;
+          notesEl.appendChild(li);
+        });
+        notesEl.style.display = "block";
+      } else {
+        notesEl.style.display = "none";
+      }
+    }
+  }
+
+  async function triggerLivePredict() {
+    if (!modelEl || !modelEl.value.trim()) return;
+    if (activeController) activeController.abort();
+    activeController = new AbortController();
+
+    const payload = {
+      brand: brandEl ? brandEl.value : "",
+      model: modelEl ? modelEl.value : "",
+      year: yearEl ? yearEl.value : "",
+      kms_driven: kmsEl ? kmsEl.value : "",
+      fuel: fuelEl ? fuelEl.value : "Petrol",
+      transmission: transEl ? transEl.value : "Manual",
+      owner: ownerEl ? ownerEl.value : "First Owner",
+    };
+
+    try {
+      const res = await fetch("/api/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: activeController.signal,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        renderPrediction(data);
+      } else if (data.error) {
+        const errBox = document.getElementById("form-error");
+        if (errBox) { errBox.textContent = data.error; errBox.style.display = "block"; }
+      }
+    } catch (err) {
+      if (err.name !== "AbortError") console.error(err);
+    }
+  }
+
+  function schedulePredict() {
+    clearTimeout(predictTimer);
+    predictTimer = setTimeout(triggerLivePredict, 180);
+  }
+
+  [brandEl, modelEl, yearEl, kmsEl, fuelEl, transEl, ownerEl].forEach(function (el) {
+    if (!el) return;
+    el.addEventListener("input", schedulePredict);
+    el.addEventListener("change", schedulePredict);
+  });
+
+  if (formEl) {
+    formEl.addEventListener("submit", function (e) {
+      if (window.fetch) {
+        e.preventDefault();
+        triggerLivePredict();
+      }
+    });
+  }
 
   // Presentation View Switcher (Predictor <-> ML Pipeline)
   function switchView(viewName) {
@@ -836,17 +589,15 @@
     }
   }
 
-  // Restore view from server initial_view or URL hash on load
   const serverInitialView = {{ initial_view | default('predictor') | tojson }};
   if (serverInitialView === 'docs' || window.location.hash === '#docs') {
     switchView('docs');
   }
 
-  // On mobile: after form submit, scroll result into view
   if (window.innerWidth < 800) {
     const resultCard = document.querySelector('.result-card');
     const hasResult = document.querySelector('.result-value');
-    if (resultCard && hasResult) {
+    if (resultCard && hasResult && hasResult.textContent.trim().length > 2) {
       setTimeout(() => {
         resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);

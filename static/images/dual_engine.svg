@@ -36,12 +36,12 @@
   <!-- Path B: ML -->
   <rect x="410" y="130" width="230" height="50" rx="8" fill="#2d2f0f" stroke="#d29922" stroke-width="1.2"/>
   <text x="525" y="151" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#d29922" text-anchor="middle">Learned Market Model</text>
-  <text x="525" y="167" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">HistGradientBoosting</text>
+  <text x="525" y="167" font-family="system-ui,sans-serif" font-size="10" fill="#8b949e" text-anchor="middle">SVR (RBF Kernel, C=10)</text>
 
   <rect x="410" y="210" width="230" height="60" rx="8" fill="#2d2f0f" stroke="#30363d" stroke-width="1"/>
-  <text x="525" y="232" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Gradient Boosted</text>
-  <text x="525" y="246" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Tree Prediction</text>
-  <text x="525" y="260" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">600 sequential trees</text>
+  <text x="525" y="232" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">Log-Target SVR</text>
+  <text x="525" y="246" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">9 Reduced Features</text>
+  <text x="525" y="260" font-family="system-ui,sans-serif" font-size="9" fill="#8b949e" text-anchor="middle">CV R² 84.45% · Test 91.14%</text>
 
   <line x1="525" y1="180" x2="525" y2="210" stroke="#d29922" stroke-width="1.5" marker-end="url(#arr2)"/>
   <line x1="525" y1="270" x2="435" y2="330" stroke="#d29922" stroke-width="1.5" marker-end="url(#arr2)"/>

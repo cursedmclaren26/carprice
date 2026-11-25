@@ -54,9 +54,9 @@ a training set. Three pieces make that work:
 
 | piece | what it gives us |
 |---|---|
-| **Market model** — gradient boosting on 6,935 real listings | the learned relationship between specification and price |
+| **Market model** — Tuned `SVR (RBF)` over 9 reduced features on 6,935 listings | the learned relationship between specification and price |
 | **Depreciation curve** — calibrated to 2026 sold prices | generalises to *any* age, including cars newer than the data |
-| **Catalogue** — 38 brands, 345 models, with segments and current ex-showroom prices | makes an unknown car resolve to a sensible segment and price anchor |
+| **Catalogue** — 38 brands, 339 models, with segments and current ex-showroom prices | makes an unknown car resolve to a sensible segment and price anchor |
 
 Everything below is the working through of that, including the four bugs the approach
 surfaced — they are left in, because the fixes are the interesting part.
@@ -165,8 +165,7 @@ plt.tight_layout(); plt.show()
     md("""
 ## 4. The market model
 
-Gradient boosting over brand, model, segment, age, km, km/year, fuel, transmission,
-owner, engine size and seats.
+Tuned `SVR` (`kernel="rbf"`, `C=10.0`, `gamma="auto"`) wrapped in `TransformedTargetRegressor(log1p/expm1)` inside a leak-free `Pipeline` over the **9 optimal reduced features**: `brand`, `model`, `segment`, `age`, `kms_driven`, `fuel`, `transmission`, `owner`, and `engine_cc` (after dropping `has_service_history`, `km_per_year`, and `seats`).
 
 ### 4.1 Cross-validation must be grouped
 
@@ -180,12 +179,12 @@ it just trained on. Compare the two numbers below.
     code("""
 from sklearn.model_selection import GroupKFold, KFold, cross_validate
 from carprice.market import build_market_pipeline
+from carprice.valuation import MARKET_FEATURES
 
-X, y = feat[["brand","model","segment","age","kms_driven","km_per_year","fuel",
-             "transmission","owner","engine_cc","seats","has_service_history"]], feat.price
+X, y = feat[MARKET_FEATURES], feat.price
 groups = feat.model
 
-pipe = build_market_pipeline("hist_gb")
+pipe = build_market_pipeline("svr")
 naive = cross_validate(pipe, X, y, cv=KFold(5, shuffle=True, random_state=42),
                        scoring="r2", n_jobs=-1)["test_score"]
 grouped = cross_validate(pipe, X, y, cv=GroupKFold(5), groups=groups,
@@ -200,7 +199,26 @@ That gap is the difference between a number you can quote and a number that surv
 contact with a car the model has not seen.
 """),
     code("""
-model, meta, (X_test, y_test, pred) = train_market(feat)
+from sklearn.model_selection import train_test_split
+from carprice.market import compute_training_correlations, iterative_feature_reduction, tune_market
+from carprice.valuation import ALL_CANDIDATE_FEATURES, MARKET_FEATURES
+
+X_all, y_all = feat[ALL_CANDIDATE_FEATURES], feat["price"].astype(float)
+X_tr_all, X_te_all, y_tr, y_te, g_tr, _ = train_test_split(
+    X_all, y_all, feat["model"], test_size=0.2, random_state=42, shuffle=True
+)
+corr_mat, ranked_corr = compute_training_correlations(X_tr_all, y_tr)
+print("Ranked |r| with price (X_train):")
+print(ranked_corr.to_string())
+
+red_df, _, _, _ = iterative_feature_reduction(X_tr_all, y_tr, X_te_all, y_te, g_tr)
+print("\\nIterative Feature Reduction (12 -> 2):")
+print(red_df[["iteration", "dropped_feature", "n_features", "cv_r2", "cv_mse_lakh2", "test_r2"]].to_string(index=False))
+"""),
+    code("""
+model, meta, (X_test, y_test, pred), comp_df = tune_market(feat, run_reduction_audit=False)
+print("\\n5-Fold GridSearchCV Leaderboard (9 Reduced Features):")
+print(comp_df[["model", "cv_r2", "cv_mse_lakh2", "test_r2", "test_mae", "best_params"]].to_string(index=False))
 """),
     code("""
 base_mae = np.abs(y_test - y_test.mean()).mean()
@@ -229,7 +247,7 @@ its specification — which needs three things a model alone cannot supply:
 2. **An ex-showroom price** to depreciate from
 3. **A depreciation curve** calibrated to today's market
 
-The catalogue supplies 1 and 2 for 38 brands and 345 models. For 3, we calibrate.
+The catalogue supplies 1 and 2 for 38 brands and 339 models. For 3, we calibrate.
 
 ### 5.1 Calibrating the curve against real 2026 prices
 
@@ -408,8 +426,7 @@ market**. Recalibrating against 2026 sold prices gave 1.36, and the Swift lands 
    part of the model has never seen a 2024-2026 car. That is exactly why the blend is
    weighted toward the curve for recent years.
 2. **No city adjustment.** Delhi, Mumbai and Bengaluru differ by 5-10% for the same car.
-3. **Condition is binary** (`service_history` yes/no). Scratches, tyres, accident history
-   and colour are not modelled and can easily move a price by 10%.
+3. **Physical condition is not observed.** `has_service_history` was constant `1` in CarDekho listings and removed during feature reduction; scratches, tyres, accident history and colour can move a price by 10%.
 4. **The catalogue prices are base variants.** Upper trims sell for more; the level
    factor absorbs the average, so a top-spec car will be undervalued and a base car
    overvalued.
@@ -425,10 +442,10 @@ market**. Recalibrating against 2026 sold prices gave 1.36, and the Swift lands 
 
 ```bash
 python -m carprice.carvalue fetch      # download the public dataset
-python -m carprice.carvalue train      # fit + save the market model
+python -m carprice.carvalue tune       # feature reduction + 5-fold GridSearchCV + save SVR
 python -m carprice.carvalue price --brand Kia --model Syros --year 2025 --km 6000
 python web/app.py                      # the web app
-pytest tests/ -q                       # 46 tests
+pytest tests/ -q                       # 55 tests
 ```
 """),
 ]

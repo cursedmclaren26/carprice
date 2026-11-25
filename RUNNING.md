@@ -161,8 +161,8 @@ Both produce:
 
 ```bash
 carvalue fetch                              # download the dataset
-carvalue train                              # fit + save the model
-carvalue tune                               # hyperparameter tuning across 4 models & comparison
+carvalue train                              # fit + save the model (9 reduced features)
+carvalue tune                               # correlation pruning + 5-fold GridSearchCV (SVR, RF, KNN)
 carvalue price --brand Kia --model Syros --year 2025 --km 6000
 carvalue brands                             # 38 known brands
 carvalue models --brand Hyundai             # models for one brand
@@ -233,7 +233,7 @@ current directory and will fail if you launch it from somewhere unrelated.
 python check_setup.py                                        # everything green?
 python -c "import carprice; print(carprice.__version__)"     # 2.0.0
 carvalue --help                                              # subcommands listed
-cd carprice && pytest tests/ -q                              # 46 passed
+cd carprice && pytest tests/ -q                              # 55 passed
 ```
 
 `check_setup.py` is the one to remember — it reports the exact interpreter path, so if
